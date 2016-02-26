@@ -3,20 +3,30 @@ package main
 import (
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/gin-gonic/gin"
 	"os"
 )
 
 func main() {
 	consumerKey := os.Getenv("CONSUMER_KEY")
 	consumerSecret := os.Getenv("CONSUMER_SECRET")
-	accessToken := os.Getenv("ACCESS_TOKEN")
-	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
 
-	fmt.Println("begin")
-	quit := make(chan bool)
+	r := gin.Default()
+	r.GET("/ping", func(c *gin.Context) {
+		connect()
+		c.JSON(200, gin.H{
+			"message": "hello world",
+		})
+	})
+	r.Run()
+}
+
+func connect() {
+	accessToken := os.Getenv("ACCESS_TOKEN")
+	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 	go func() {
 		api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 		twitterStream := api.UserStream(nil)
@@ -40,8 +50,5 @@ func main() {
 				fmt.Printf("unknown type(%T) : %v \n", x, x)
 			}
 		}
-		quit <- true
 	}()
-	<-quit
-	fmt.Println("end")
 }
