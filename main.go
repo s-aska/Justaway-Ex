@@ -14,25 +14,33 @@ func main() {
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
 
+	fin := make(chan bool)
+
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		connect()
+	r.GET("/start", func(c *gin.Context) {
+		go connect(fin)
 		c.JSON(200, gin.H{
-			"message": "hello world",
+			"message": "start streaming",
+		})
+	})
+	r.GET("/stop", func(c *gin.Context) {
+		fin <- true
+		c.JSON(200, gin.H{
+			"message": "stop streaming",
 		})
 	})
 	r.Run()
 }
 
-func connect() {
+func connect(fin <-chan bool) {
 	accessToken := os.Getenv("ACCESS_TOKEN")
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
-	go func() {
-		api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
-		twitterStream := api.UserStream(nil)
-		fmt.Println("connect")
-		for {
-			x := <-twitterStream.C
+	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
+	twitterStream := api.UserStream(nil)
+	fmt.Println("connect")
+	for {
+		select {
+		case x := <-twitterStream.C:
 			switch data := x.(type) {
 			case anaconda.FriendsList:
 				// pass
@@ -49,6 +57,10 @@ func connect() {
 			default:
 				fmt.Printf("unknown type(%T) : %v \n", x, x)
 			}
+		case <-fin:
+			twitterStream.Stop()
+			fmt.Println("fin")
+			return
 		}
-	}()
+	}
 }
