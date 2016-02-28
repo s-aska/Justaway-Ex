@@ -21,8 +21,11 @@ func main() {
 	cleanup := func(id string) {
 		m.Lock()
 		defer m.Unlock()
-		close(d[id])
-		delete(d, id)
+		_, ok := d[id]
+		if ok {
+			close(d[id])
+			delete(d, id)
+		}
 		fmt.Printf("cleanup %s\n", id)
 	}
 
@@ -33,18 +36,21 @@ func main() {
 		defer m.Unlock()
 
 		id := c.Param("id")
+
 		_, ok := d[id]
 		if ok {
 			c.JSON(200, gin.H{
 				"message": "exists streaming",
 			})
-		} else {
-			d[id] = make(chan bool)
-			go connect(d[id], id, cleanup)
-			c.JSON(200, gin.H{
-				"message": "start streaming",
-			})
+			return
 		}
+
+		fin := make(chan bool)
+		d[id] = fin
+		go connect(fin, id, cleanup)
+		c.JSON(200, gin.H{
+			"message": "start streaming",
+		})
 	})
 
 	r.GET("/stop", func(c *gin.Context) {
@@ -53,18 +59,20 @@ func main() {
 		defer m.Unlock()
 
 		id := c.Param("id")
-		if fin, ok := d[id]; ok {
-			fin <- true
-			close(fin)
-			delete(d, id)
-			c.JSON(200, gin.H{
-				"message": "stop streaming",
-			})
-		} else {
+		fin, ok := d[id]
+		if !ok {
 			c.JSON(200, gin.H{
 				"message": "missing streaming",
 			})
+			return
 		}
+
+		fin <- true
+		close(fin)
+		delete(d, id)
+		c.JSON(200, gin.H{
+			"message": "stop streaming",
+		})
 	})
 	r.Run()
 }
@@ -77,8 +85,8 @@ func connect(fin <-chan bool, id string, cleanup func(id string)) {
 	fmt.Println("connect")
 	for {
 		select {
-		case x := <-stream.C:
-			if x == nil {
+		case x, ok := <-stream.C:
+			if !ok {
 				stream.Stop()
 				fmt.Println("disconnect with error")
 				cleanup(id)
