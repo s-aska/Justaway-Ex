@@ -14,20 +14,36 @@ func main() {
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
 
-	fin := make(chan bool)
+	chans := map[string]chan bool{}
 
 	r := gin.Default()
 	r.GET("/start", func(c *gin.Context) {
-		go connect(fin)
-		c.JSON(200, gin.H{
-			"message": "start streaming",
-		})
+		id := "abc"
+		if chans[id] {
+			c.JSON(200, gin.H{
+				"message": "exists streaming",
+			})
+		} else {
+			chans[id] = make(chan bool)
+			go connect(chans[id])
+			c.JSON(200, gin.H{
+				"message": "start streaming",
+			})
+		}
 	})
 	r.GET("/stop", func(c *gin.Context) {
-		fin <- true
-		c.JSON(200, gin.H{
-			"message": "stop streaming",
-		})
+		id := "abc"
+		if fin, ok := chans[id]; ok {
+			fin <- true
+			delete(chans, id)
+			c.JSON(200, gin.H{
+				"message": "stop streaming",
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "missing streaming",
+			})
+		}
 	})
 	r.Run()
 }
