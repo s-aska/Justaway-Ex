@@ -5,6 +5,7 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/gin-gonic/gin"
 	"os"
+	"sync"
 )
 
 func main() {
@@ -14,12 +15,16 @@ func main() {
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
 
+	m := new(sync.Mutex)
 	chans := map[string]chan bool{}
 
 	r := gin.Default()
 	r.GET("/start", func(c *gin.Context) {
+		m.Lock()
+		defer m.Unlock()
 		id := "abc"
-		if chans[id] {
+		_, ok := chans[id]
+		if ok {
 			c.JSON(200, gin.H{
 				"message": "exists streaming",
 			})
@@ -32,9 +37,12 @@ func main() {
 		}
 	})
 	r.GET("/stop", func(c *gin.Context) {
+		m.Lock()
+		defer m.Unlock()
 		id := "abc"
 		if fin, ok := chans[id]; ok {
 			fin <- true
+			close(fin)
 			delete(chans, id)
 			c.JSON(200, gin.H{
 				"message": "stop streaming",
