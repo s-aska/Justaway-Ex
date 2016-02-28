@@ -16,34 +16,39 @@ func main() {
 	anaconda.SetConsumerSecret(consumerSecret)
 
 	m := new(sync.Mutex)
-	chans := map[string]chan bool{}
+	d := map[string]chan bool{}
 
 	r := gin.Default()
 	r.GET("/start", func(c *gin.Context) {
+
 		m.Lock()
 		defer m.Unlock()
-		id := "abc"
-		_, ok := chans[id]
+
+		id := c.Param("id")
+		_, ok := d[id]
 		if ok {
 			c.JSON(200, gin.H{
 				"message": "exists streaming",
 			})
 		} else {
-			chans[id] = make(chan bool)
-			go connect(chans[id])
+			d[id] = make(chan bool)
+			go connect(d[id])
 			c.JSON(200, gin.H{
 				"message": "start streaming",
 			})
 		}
 	})
+
 	r.GET("/stop", func(c *gin.Context) {
+
 		m.Lock()
 		defer m.Unlock()
-		id := "abc"
-		if fin, ok := chans[id]; ok {
+
+		id := c.Param("id")
+		if fin, ok := d[id]; ok {
 			fin <- true
 			close(fin)
-			delete(chans, id)
+			delete(d, id)
 			c.JSON(200, gin.H{
 				"message": "stop streaming",
 			})
@@ -83,7 +88,7 @@ func connect(fin <-chan bool) {
 			}
 		case <-fin:
 			twitterStream.Stop()
-			fmt.Println("fin")
+			fmt.Println("disconnect")
 			return
 		}
 	}
