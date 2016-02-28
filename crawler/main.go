@@ -32,7 +32,14 @@ func main() {
 			})
 		} else {
 			d[id] = make(chan bool)
-			go connect(d[id])
+			cleanup := func() {
+				m.Lock()
+				defer m.Unlock()
+				close(d[id])
+				delete(d, id)
+				fmt.Printf("cleanup %s\n", id)
+			}
+			go connect(d[id], cleanup)
 			c.JSON(200, gin.H{
 				"message": "start streaming",
 			})
@@ -61,7 +68,7 @@ func main() {
 	r.Run()
 }
 
-func connect(fin <-chan bool) {
+func connect(fin <-chan bool, cleanup func()) {
 	accessToken := os.Getenv("ACCESS_TOKEN")
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
@@ -70,6 +77,12 @@ func connect(fin <-chan bool) {
 	for {
 		select {
 		case x := <-twitterStream.C:
+			if x == nil {
+				twitterStream.Stop()
+				fmt.Println("disconnect with error")
+				cleanup()
+				return
+			}
 			switch data := x.(type) {
 			case anaconda.FriendsList:
 				// pass
@@ -88,7 +101,7 @@ func connect(fin <-chan bool) {
 			}
 		case <-fin:
 			twitterStream.Stop()
-			fmt.Println("disconnect")
+			fmt.Println("disconnect signal")
 			return
 		}
 	}
