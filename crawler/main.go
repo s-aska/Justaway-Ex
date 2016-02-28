@@ -18,6 +18,14 @@ func main() {
 	m := new(sync.Mutex)
 	d := map[string]chan bool{}
 
+	cleanup := func(id string) {
+		m.Lock()
+		defer m.Unlock()
+		close(d[id])
+		delete(d, id)
+		fmt.Printf("cleanup %s\n", id)
+	}
+
 	r := gin.Default()
 	r.GET("/start", func(c *gin.Context) {
 
@@ -32,14 +40,7 @@ func main() {
 			})
 		} else {
 			d[id] = make(chan bool)
-			cleanup := func() {
-				m.Lock()
-				defer m.Unlock()
-				close(d[id])
-				delete(d, id)
-				fmt.Printf("cleanup %s\n", id)
-			}
-			go connect(d[id], cleanup)
+			go connect(d[id], id, cleanup)
 			c.JSON(200, gin.H{
 				"message": "start streaming",
 			})
@@ -68,19 +69,19 @@ func main() {
 	r.Run()
 }
 
-func connect(fin <-chan bool, cleanup func()) {
+func connect(fin <-chan bool, id string, cleanup func(id string)) {
 	accessToken := os.Getenv("ACCESS_TOKEN")
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
-	twitterStream := api.UserStream(nil)
+	stream := api.UserStream(nil)
 	fmt.Println("connect")
 	for {
 		select {
-		case x := <-twitterStream.C:
+		case x := <-stream.C:
 			if x == nil {
-				twitterStream.Stop()
+				stream.Stop()
 				fmt.Println("disconnect with error")
-				cleanup()
+				cleanup(id)
 				return
 			}
 			switch data := x.(type) {
@@ -100,7 +101,7 @@ func connect(fin <-chan bool, cleanup func()) {
 				fmt.Printf("unknown type(%T) : %v \n", x, x)
 			}
 		case <-fin:
-			twitterStream.Stop()
+			stream.Stop()
 			fmt.Println("disconnect signal")
 			return
 		}
