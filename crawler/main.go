@@ -68,8 +68,6 @@ func main() {
 		}
 
 		fin <- true
-		close(fin)
-		delete(d, id)
 		c.JSON(200, gin.H{
 			"message": "stop streaming",
 		})
@@ -111,6 +109,7 @@ func connect(fin <-chan bool, id string, cleanup func(id string)) {
 		case <-fin:
 			stream.Stop()
 			fmt.Println("disconnect signal")
+			cleanup(id)
 			return
 		}
 	}
