@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo"
 	"os"
 )
 
@@ -13,8 +13,9 @@ func main() {
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
 
-	r := gin.Default()
-	r.GET("/start", start)
-	r.GET("/stop", stop)
-	r.Run()
+	e := echo.New()
+	e.Debug()
+	e.Get("/start", start)
+	e.Get("/stop", stop)
+	e.Run("127.0.0.1:8001")
 }

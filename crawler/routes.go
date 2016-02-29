@@ -1,21 +1,27 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo"
 )
 
-func start(c *gin.Context) {
+type (
+	response struct {
+		Message string
+	}
+)
+
+func start(c *echo.Context) error {
 	go connect(c.Param("id"))
 
-	c.JSON(200, gin.H{
-		"message": "start streaming",
+	return c.JSON(200, &response{
+		Message: "start",
 	})
 }
 
-func stop(c *gin.Context) {
+func stop(c *echo.Context) error {
 	go disconnect(c.Param("id"))
 
-	c.JSON(200, gin.H{
-		"message": "stop streaming",
+	return c.JSON(200, &response{
+		Message: "stop",
 	})
 }
