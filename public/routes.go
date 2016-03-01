@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/bradleypeabody/gorilla-sessions-memcache"
-	"github.com/ChimeraCoder/anaconda"
+	"github.com/garyburd/go-oauth/oauth"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
-	"github.com/garyburd/go-oauth/oauth"
+	"net/http"
 )
 
 var store = func() *gsm.MemcacheStore {
@@ -61,7 +61,7 @@ func callback(c *echo.Context) error {
 	token := session.Values["request_token"]
 	secret := session.Values["request_secret"]
 	tempCred := oauth.Credentials{
-		Token: token.(string),
+		Token:  token.(string),
 		Secret: secret.(string),
 	}
 	cred, _, err := anaconda.GetCredentials(&tempCred, c.Query("oauth_verifier"))
