@@ -3,17 +3,17 @@ package main
 import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/labstack/echo"
-	"os"
 	"io"
+	"os"
 )
 import "text/template"
 
 type Template struct {
-    templates *template.Template
+	templates *template.Template
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) error {
-    return t.templates.ExecuteTemplate(w, name, data)
+	return t.templates.ExecuteTemplate(w, name, data)
 }
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 	e := echo.New()
 
 	t := &Template{
-	    templates: template.Must(template.ParseGlob("views/*.html")),
+		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 	e.SetRenderer(t)
 
