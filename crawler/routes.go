@@ -11,7 +11,7 @@ type (
 )
 
 func start(c *echo.Context) error {
-	go connect(c.Param("id"))
+	go connect(c.Query("id"))
 
 	return c.JSON(200, &response{
 		Message: "start",
@@ -19,7 +19,7 @@ func start(c *echo.Context) error {
 }
 
 func stop(c *echo.Context) error {
-	go disconnect(c.Param("id"))
+	go disconnect(c.Query("id"))
 
 	return c.JSON(200, &response{
 		Message: "stop",

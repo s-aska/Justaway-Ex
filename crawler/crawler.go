@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
-	"os"
+	// "os"
 	"sync"
 )
+import _ "github.com/go-sql-driver/mysql"
 
 var m = new(sync.Mutex)
 var d = map[string]chan bool{}
@@ -48,9 +50,28 @@ func connect(id string) {
 }
 
 func connectStream(ch <-chan bool, id string) {
-	// TODO: get by DB
-	accessToken := os.Getenv("ACCESS_TOKEN")
-	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
+
+	db, err := sql.Open("mysql", "root:@/justaway")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	stmtOut, err := db.Prepare("SELECT access_token, access_token_secret FROM account WHERE id = ?")
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+	defer stmtOut.Close()
+
+	var accessToken string
+	var accessTokenSecret string
+
+	err = stmtOut.QueryRow(id).Scan(&accessToken, &accessTokenSecret)
+
+	fmt.Printf("id %s\n", id)
+	fmt.Printf("accessToken %s\n", accessToken)
+	fmt.Printf("accessTokenSecret %s\n", accessTokenSecret)
+
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 	api.SetLogger(anaconda.BasicLogger)
 	s := api.UserStream(nil)
