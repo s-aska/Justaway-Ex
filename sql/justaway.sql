@@ -75,9 +75,15 @@ DROP TABLE IF EXISTS notification;
 CREATE TABLE notification (
     id                  BIGINT UNSIGNED      NOT NULL AUTO_INCREMENT,
     user_id             BIGINT UNSIGNED      NOT NULL,
+    status_id           BIGINT UNSIGNED      NOT NULL,
+    unique_id           VARCHAR(255)
+                        CHARACTER SET ascii
+                        COLLATE ascii_bin    NOT NULL,
     data                MEDIUMBLOB           NOT NULL,
     created_on          INTEGER UNSIGNED     NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE (unique_id),
+    KEY (status_id),
     KEY (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -9,8 +9,10 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 import _ "github.com/go-sql-driver/mysql"
@@ -100,9 +102,7 @@ func callback(c *echo.Context) error {
 	user, err := api.GetSelf(v)
 
 	now := time.Now()
-	fmt.Printf("id %s\n", user.Id)
-	fmt.Printf("name %s\n", user.Name)
-	fmt.Printf("ScreenName %s\n", user.ScreenName)
+	fmt.Printf("callback user_id:%s screen_name:%s name:%s\n", user.Id, user.ScreenName, user.Name)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {
@@ -110,16 +110,41 @@ func callback(c *echo.Context) error {
 	}
 	defer db.Close()
 
-	stmtIns, err := db.Prepare("INSERT INTO account(crawler_id, user_id, name, screen_name, access_token, access_token_secret, status, created_on, updated_on) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	stmtIns, err := db.Prepare(`
+		INSERT INTO account(
+			crawler_id,
+			user_id,
+			name,
+			screen_name,
+			access_token,
+			access_token_secret,
+			status,
+			created_on,
+			updated_on
+		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+			name = VALUES(name),
+			screen_name = VALUES(screen_name),
+			access_token = VALUES(access_token),
+			access_token_secret = VALUES(access_token_secret),
+			status = VALUES(status),
+			updated_on = ?
+	`)
 	if err != nil {
 		panic(err.Error())
 	}
 	defer stmtIns.Close()
 
-	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0)
+	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
 	if err != nil {
 		panic(err.Error())
 	}
+
+	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/start?id="+strconv.FormatInt(user.Id, 10), nil)
+	client := new(http.Client)
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	fmt.Printf("request user_id:%s screen_name:%s res:%s\n", user.Id, user.ScreenName, string(byteArray))
 
 	return c.JSON(200, cred)
 }
