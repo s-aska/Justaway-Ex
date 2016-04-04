@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/ChimeraCoder/anaconda"
 	"github.com/labstack/echo"
+	"github.com/s-aska/anaconda"
 	"os"
 )
 

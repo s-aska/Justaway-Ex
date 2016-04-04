@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/ChimeraCoder/anaconda"
+	"github.com/s-aska/anaconda"
 	"sync"
 	"time"
 )
