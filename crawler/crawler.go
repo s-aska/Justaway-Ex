@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/ChimeraCoder/anaconda"
+	"github.com/s-aska/anaconda"
 	// "os"
 	"sync"
 )
@@ -33,7 +33,7 @@ func cleanup(id string) {
 		delete(d, id)
 	}
 
-	fmt.Printf("cleanup %s\n", id)
+	fmt.Printf("[%s] cleanup\n", id)
 }
 
 func connect(id string) {
@@ -53,7 +53,7 @@ func connect(id string) {
 
 	stmtOut, err := db.Prepare("SELECT access_token, access_token_secret FROM account WHERE user_id = ?")
 	if err != nil {
-		panic(err.Error()) // proper error handling instead of panic in your app
+		panic(err.Error())
 	}
 	defer stmtOut.Close()
 
@@ -62,9 +62,7 @@ func connect(id string) {
 
 	err = stmtOut.QueryRow(id).Scan(&accessToken, &accessTokenSecret)
 
-	fmt.Printf("id %s\n", id)
-	fmt.Printf("accessToken %s\n", accessToken)
-	fmt.Printf("accessTokenSecret %s\n", accessTokenSecret)
+	fmt.Printf("[%s] accessToken:%s accessTokenSecret:%s\n", id, accessToken, accessTokenSecret)
 
 	ch := make(chan bool)
 	d[id] = ch
@@ -75,12 +73,12 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 	api.SetLogger(anaconda.BasicLogger)
 	s := api.UserStream(nil)
-	fmt.Printf("connect %s\n", id)
+	fmt.Printf("[%s] connect\n", id)
 	for {
 		select {
 		case x, ok := <-s.C:
 			if !ok {
-				fmt.Printf("disconnect %s\n", id)
+				fmt.Printf("[%s] disconnect\n", id)
 				s.Stop()
 				cleanup(id)
 				return
@@ -89,19 +87,33 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 			case anaconda.FriendsList:
 				// pass
 			case anaconda.Tweet:
-				fmt.Println("status: " + data.Text)
+				fmt.Printf("[%s] status: @%s `%s`\n", id, data.User.ScreenName, data.Text)
+			case anaconda.DirectMessage:
+				fmt.Printf("[%s] message: @%s => @%s `%s`\n", id, data.SenderScreenName, data.RecipientScreenName, data.Text)
 			case anaconda.StatusDeletionNotice:
-				// pass
-			case anaconda.EventTweet:
-				// fmt.Println(data.Event.Event + " " + data.TargetObject.Text)
+				fmt.Printf("[%s] status delete: %s:%s\n", id, data.UserIdStr, data.IdStr)
+			case anaconda.DirectMessageDeletionNotice:
+				fmt.Printf("[%s] message delete: %s:%s\n", id, data.UserId, data.IdStr)
 				bytes, _ := json.Marshal(data)
-				fmt.Println("event: " + string(bytes))
-				// pass
+				fmt.Printf("[%s] message delete: %s\n", id, string(bytes))
+			case anaconda.EventTweet:
+				bytes, _ := json.Marshal(data)
+				fmt.Printf("[%s] eventTweet: %s %s\n", id, data.Event.Event, string(bytes))
+			case anaconda.EventList:
+				bytes, _ := json.Marshal(data)
+				fmt.Printf("[%s] eventList: %s %s\n", id, data.Event.Event, string(bytes))
+			case anaconda.Event:
+				bytes, _ := json.Marshal(data)
+				fmt.Printf("[%s] event: %s %s", id, data.Event, string(bytes))
+			case anaconda.DisconnectMessage:
+				fmt.Printf("[%s] disconnectMessage\n", id)
+				s.Stop()
+				cleanup(id)
 			default:
-				fmt.Printf("unknown type(%T) : %v \n", x, x)
+				fmt.Printf("[%s] unknown type(%T) : %v\n", id, x, x)
 			}
 		case <-ch:
-			fmt.Printf("stop %s\n", id)
+			fmt.Printf("[%s] stop\n", id)
 			s.Stop()
 			cleanup(id)
 			return
