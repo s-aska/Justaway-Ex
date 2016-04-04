@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/s-aska/anaconda"
-	// "os"
+	"github.com/ChimeraCoder/anaconda"
 	"sync"
+	"time"
 )
 import _ "github.com/go-sql-driver/mysql"
 
@@ -94,11 +94,11 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 				fmt.Printf("[%s] status delete: %s:%s\n", id, data.UserIdStr, data.IdStr)
 			case anaconda.DirectMessageDeletionNotice:
 				fmt.Printf("[%s] message delete: %s:%s\n", id, data.UserId, data.IdStr)
-				bytes, _ := json.Marshal(data)
-				fmt.Printf("[%s] message delete: %s\n", id, string(bytes))
 			case anaconda.EventTweet:
+				uniqueId := "status:" + data.TargetObject.IdStr + ":" + data.Event.Event + ":" + data.Event.Source.IdStr
 				bytes, _ := json.Marshal(data)
-				fmt.Printf("[%s] eventTweet: %s %s\n", id, data.Event.Event, string(bytes))
+				fmt.Printf("[%s] eventTweet: %s %s\n", id, uniqueId, string(bytes))
+				go createNotification(id, uniqueId, string(bytes))
 			case anaconda.EventList:
 				bytes, _ := json.Marshal(data)
 				fmt.Printf("[%s] eventList: %s %s\n", id, data.Event.Event, string(bytes))
@@ -118,5 +118,31 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 			cleanup(id)
 			return
 		}
+	}
+}
+
+func createNotification(userId string, uniqueId string, data string) {
+	db, err := sql.Open("mysql", "root:@/justaway")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	stmtIns, err := db.Prepare(`
+		INSERT IGNORE INTO activity(
+			user_id,
+			unique_id,
+			data,
+			created_on
+		) VALUES(?, ?, ?, ?)
+	`)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtIns.Close()
+
+	_, err = stmtIns.Exec(userId, uniqueId, data, time.Now().Unix())
+	if err != nil {
+		panic(err.Error())
 	}
 }
