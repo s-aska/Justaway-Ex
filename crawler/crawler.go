@@ -104,7 +104,7 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 				fmt.Printf("[%s] eventList: %s %s\n", id, data.Event.Event, string(bytes))
 			case anaconda.Event:
 				bytes, _ := json.Marshal(data)
-				fmt.Printf("[%s] event: %s %s", id, data.Event, string(bytes))
+				fmt.Printf("[%s] event: %s %s\n", id, data.Event, string(bytes))
 			case anaconda.DisconnectMessage:
 				fmt.Printf("[%s] disconnectMessage\n", id)
 				s.Stop()
