@@ -10,7 +10,7 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 	api.SetLogger(anaconda.BasicLogger)
 	s := api.UserStream(nil)
-	fmt.Printf("[%s] connect\n", id)
+	fmt.Printf("[%s] connecting...\n", id)
 	for {
 		select {
 		case x, ok := <-s.C:
@@ -21,10 +21,8 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 				return
 			}
 			switch data := x.(type) {
-
 			case anaconda.FriendsList:
-				// pass
-
+				fmt.Printf("[%s] connected\n", id)
 			case anaconda.Tweet:
 				go handlerTweet(id, data)
 			case anaconda.DirectMessage:
@@ -43,7 +41,6 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 				fmt.Printf("[%s] disconnectMessage\n", id)
 				s.Stop()
 				cleanup(id)
-
 			default:
 				fmt.Printf("[%s] unknown type(%T) : %v\n", id, x, x)
 			}
