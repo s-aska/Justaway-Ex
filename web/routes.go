@@ -66,7 +66,7 @@ func count(c *echo.Context) error {
 }
 
 func signin(c *echo.Context) error {
-	url, tempCred, err := anaconda.AuthorizationURL("http://127.0.0.1:8002/callback")
+	url, tempCred, err := anaconda.AuthorizationURL("http://127.0.0.1:8002/signin/callback")
 
 	if err != nil {
 		return c.String(200, err.Error())
@@ -146,7 +146,7 @@ func callback(c *echo.Context) error {
 		panic(err.Error())
 	}
 
-	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/start?id="+strconv.FormatInt(user.Id, 10), nil)
+	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/"+strconv.FormatInt(user.Id, 10)+"/start", nil)
 	client := new(http.Client)
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()

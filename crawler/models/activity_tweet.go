@@ -1,4 +1,4 @@
-package crawler
+package models
 
 import (
 	"database/sql"
@@ -8,10 +8,14 @@ import (
 )
 import _ "github.com/go-sql-driver/mysql"
 
-func createActivity(userId string, statusId string, event string, sourceUserId string, data string) {
-	uniqueId := strings.Join([]string{"status", statusId, event, sourceUserId}, ":")
+func makeTweetUniqueId(statusId string, event string, sourceUserId string) string {
+	return strings.Join([]string{"tweet", statusId, event, sourceUserId}, ":")
+}
 
-	fmt.Printf("[%s] createActivity: %s\n", userId, uniqueId)
+func CreateTweetActivity(userId string, statusId string, event string, sourceUserId string, data string) {
+	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
+
+	fmt.Printf("[%s] CreateTweetActivity: %s\n", userId, uniqueId)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {
@@ -41,10 +45,10 @@ func createActivity(userId string, statusId string, event string, sourceUserId s
 	}
 }
 
-func deleteActivity(statusId string, event string, sourceUserId string) {
-	uniqueId := strings.Join([]string{"status", statusId, event, sourceUserId}, ":")
+func DeleteTweetActivity(statusId string, event string, sourceUserId string) {
+	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
 
-	fmt.Printf("[%s] deleteActivity: %s\n", "-", uniqueId)
+	fmt.Printf("[%s] DeleteTweetActivity: %s\n", "-", uniqueId)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {
@@ -67,10 +71,10 @@ func deleteActivity(statusId string, event string, sourceUserId string) {
 	}
 }
 
-func deleteActivityByStatusId(statusId string) {
-	uniqueId := strings.Join([]string{"status", statusId, "%"}, ":")
+func DeleteTweetActivityByStatusId(statusId string) {
+	uniqueId := strings.Join([]string{"tweet", statusId, "%"}, ":")
 
-	fmt.Printf("[%s] deleteActivity: %s\n", "-", uniqueId)
+	fmt.Printf("[%s] DeleteTweetActivityByStatusId: %s\n", "-", uniqueId)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {
@@ -93,10 +97,10 @@ func deleteActivityByStatusId(statusId string) {
 	}
 }
 
-func createActivityWithReferenceId(userId string, statusId string, event string, sourceUserId string, referenceId string, data string) {
-	uniqueId := strings.Join([]string{"status", statusId, event, sourceUserId}, ":")
+func CreateTweetActivityWithReferenceId(userId string, statusId string, event string, sourceUserId string, referenceId string, data string) {
+	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
 
-	fmt.Printf("[%s] createActivityWithReferenceId: %s %s\n", userId, uniqueId, referenceId)
+	fmt.Printf("[%s] CreateTweetActivityWithReferenceId: %s %s\n", userId, uniqueId, referenceId)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {
@@ -127,8 +131,8 @@ func createActivityWithReferenceId(userId string, statusId string, event string,
 	}
 }
 
-func deleteActivityByReferenceId(referenceId string) {
-	fmt.Printf("[%s] deleteActivityByReferenceId: %s\n", "-", referenceId)
+func DeleteTweetActivityByReferenceId(referenceId string) {
+	fmt.Printf("[%s] DeleteTweetActivityByReferenceId: %s\n", "-", referenceId)
 
 	db, err := sql.Open("mysql", "root:@/justaway")
 	if err != nil {

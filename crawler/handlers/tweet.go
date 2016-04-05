@@ -1,10 +1,11 @@
-package crawler
+package handlers
 
 import (
+	"github.com/s-aska/Justaway-Ex/crawler/models"
 	"github.com/s-aska/anaconda"
 )
 
-func handlerTweet(userIdStr string, data anaconda.Tweet) {
+func HandlerTweet(userIdStr string, data anaconda.Tweet) {
 	if data.RetweetedStatus != nil && data.RetweetedStatus.User.IdStr == userIdStr {
 		handlerTweetRetweeted(data)
 	} else if data.InReplyToUserIdStr == userIdStr {
@@ -13,7 +14,7 @@ func handlerTweet(userIdStr string, data anaconda.Tweet) {
 }
 
 func handlerTweetRetweeted(data anaconda.Tweet) {
-	createActivityWithReferenceId(
+	models.CreateTweetActivityWithReferenceId(
 		data.RetweetedStatus.User.IdStr,
 		data.RetweetedStatus.IdStr,
 		"retweet",
@@ -23,7 +24,7 @@ func handlerTweetRetweeted(data anaconda.Tweet) {
 }
 
 func handlerTweetReply(data anaconda.Tweet) {
-	createActivityWithReferenceId(
+	models.CreateTweetActivityWithReferenceId(
 		data.InReplyToUserIdStr,
 		data.InReplyToStatusIdStr,
 		"reply",
@@ -32,7 +33,7 @@ func handlerTweetReply(data anaconda.Tweet) {
 		encodeJson(data))
 }
 
-func handlerStatusDeletionNotice(data anaconda.StatusDeletionNotice) {
-	deleteActivityByStatusId(data.IdStr)
-	deleteActivityByReferenceId(data.IdStr)
+func HandlerStatusDeletionNotice(data anaconda.StatusDeletionNotice) {
+	models.DeleteTweetActivityByStatusId(data.IdStr)
+	models.DeleteTweetActivityByReferenceId(data.IdStr)
 }

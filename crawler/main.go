@@ -15,7 +15,7 @@ func main() {
 
 	e := echo.New()
 	e.Debug()
-	e.Get("/start", start)
-	e.Get("/stop", stop)
+	e.Get("/:id/start", start)
+	e.Get("/:id/stop", stop)
 	e.Run("127.0.0.1:8001")
 }

@@ -3,6 +3,7 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/s-aska/Justaway-Ex/crawler/handlers"
 	"github.com/s-aska/anaconda"
 )
 
@@ -24,15 +25,15 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 			case anaconda.FriendsList:
 				fmt.Printf("[%s] connected\n", id)
 			case anaconda.Tweet:
-				go handlerTweet(id, data)
+				go handlers.HandlerTweet(id, data)
 			case anaconda.DirectMessage:
-				go handlerDirectMessage(id, data)
+				go handlers.HandlerDirectMessage(id, data)
 			case anaconda.StatusDeletionNotice:
-				go handlerStatusDeletionNotice(data)
+				go handlers.HandlerStatusDeletionNotice(data)
 			case anaconda.DirectMessageDeletionNotice:
-				go handlerDirectMessageDeletionNotice(id, data)
+				go handlers.HandlerDirectMessageDeletionNotice(id, data)
 			case anaconda.EventTweet:
-				go handlerEventTweet(id, data)
+				go handlers.HandlerEventTweet(id, data)
 			case anaconda.EventList:
 				fmt.Printf("[%s] eventList: %s %s\n", id, data.Event.Event, encodeJson(data))
 			case anaconda.Event:

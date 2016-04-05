@@ -33,7 +33,7 @@ func main() {
 	e.Debug()
 	e.Get("/", index)
 	e.Get("/count", count)
-	e.Get("/signin", signin)
-	e.Get("/callback", callback)
+	e.Get("/signin/", signin)
+	e.Get("/signin/callback", callback)
 	e.Run("127.0.0.1:8002")
 }

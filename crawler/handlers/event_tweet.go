@@ -1,27 +1,25 @@
-package crawler
+package handlers
 
 import (
+	"github.com/s-aska/Justaway-Ex/crawler/models"
 	"github.com/s-aska/anaconda"
 )
 
-func handlerEventTweet(userId string, data anaconda.EventTweet) {
+func HandlerEventTweet(userId string, data anaconda.EventTweet) {
 	if data.Event.Event == "quoted_tweet" && data.TargetObject.QuotedStatus.User.IdStr == userId {
 		handlerEventTweetQuotedTweet(data)
 	} else if data.TargetObject.User.IdStr == userId {
-		if data.Event.Event == "favorite" {
+		switch data.Event.Event {
+		case "favorite", "favorited_retweet", "retweeted_retweet":
 			handlerEventTweetFavorite(data)
-		} else if data.Event.Event == "favorited_retweet" {
-			handlerEventTweetFavorite(data)
-		} else if data.Event.Event == "retweeted_retweet" {
-			handlerEventTweetFavorite(data)
-		} else if data.Event.Event == "unfavorite" {
+		case "unfavorite":
 			handlerEventTweetUnfavorite(data)
 		}
 	}
 }
 
 func handlerEventTweetQuotedTweet(data anaconda.EventTweet) {
-	createActivityWithReferenceId(
+	models.CreateTweetActivityWithReferenceId(
 		data.TargetObject.QuotedStatus.User.IdStr,
 		data.TargetObject.QuotedStatus.IdStr,
 		data.Event.Event,
@@ -31,7 +29,7 @@ func handlerEventTweetQuotedTweet(data anaconda.EventTweet) {
 }
 
 func handlerEventTweetFavorite(data anaconda.EventTweet) {
-	createActivity(
+	models.CreateTweetActivity(
 		data.TargetObject.User.IdStr,
 		data.TargetObject.IdStr,
 		data.Event.Event,
@@ -40,7 +38,7 @@ func handlerEventTweetFavorite(data anaconda.EventTweet) {
 }
 
 func handlerEventTweetUnfavorite(data anaconda.EventTweet) {
-	deleteActivity(
+	models.DeleteTweetActivity(
 		data.TargetObject.IdStr,
 		"favorite",
 		data.Event.Source.IdStr)

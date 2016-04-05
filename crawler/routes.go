@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./crawler"
 	"github.com/labstack/echo"
+	"github.com/s-aska/Justaway-Ex/crawler/crawler"
 )
 
 type (
@@ -12,7 +12,7 @@ type (
 )
 
 func start(c *echo.Context) error {
-	go crawler.Connect(c.Query("id"))
+	go crawler.Connect(c.Param("id"))
 
 	return c.JSON(200, &response{
 		Success: true,
@@ -20,7 +20,7 @@ func start(c *echo.Context) error {
 }
 
 func stop(c *echo.Context) error {
-	go crawler.Disconnect(c.Query("id"))
+	go crawler.Disconnect(c.Param("id"))
 
 	return c.JSON(200, &response{
 		Success: true,
