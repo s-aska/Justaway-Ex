@@ -203,7 +203,7 @@ func activity(c *echo.Context) error {
 
 	maxIdStr := ""
 	minIdStr := "null"
-	statuses := ""
+	events := ""
 	count := 0
 	for rows.Next() {
 		count++
@@ -213,10 +213,10 @@ func activity(c *echo.Context) error {
 		if err != nil {
 			panic(err.Error())
 		}
-		if statuses == "" {
-			statuses = data
+		if events == "" {
+			events = data
 		} else {
-			statuses = statuses + "," + data
+			events = events + "," + data
 		}
 		if maxIdStr == "" {
 			maxIdStr = "\""+id+"\""
@@ -224,5 +224,5 @@ func activity(c *echo.Context) error {
 		minIdStr = "\""+id+"\""
 	}
 
-	return c.String(200, "{\"statuses\":["+statuses+"],\"max_id_str\":"+maxIdStr+",\"min_id_str\":"+minIdStr+"}")
+	return c.String(200, "{\"events\":["+events+"],\"max_id_str\":"+maxIdStr+",\"min_id_str\":"+minIdStr+"}")
 }
