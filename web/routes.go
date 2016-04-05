@@ -67,7 +67,7 @@ func count(c echo.Context) error {
 }
 
 func signin(c echo.Context) error {
-	url, tempCred, err := anaconda.AuthorizationURL("http://127.0.0.1:8002/signin/callback")
+	url, tempCred, err := anaconda.AuthorizationURL("https://justaway.info/signin/callback")
 
 	if err != nil {
 		return c.String(200, err.Error())
