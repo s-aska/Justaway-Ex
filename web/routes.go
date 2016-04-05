@@ -12,6 +12,7 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -35,8 +36,8 @@ var store = func() *gsm.MemcacheStore {
 
 const session_name = "justaway_session"
 
-func index(c *echo.Context) error {
-	session, _ := store.Get(c.Request(), session_name)
+func index(c echo.Context) error {
+	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
 	var count int
 	value := session.Values["count"]
 	if value == nil {
@@ -46,12 +47,12 @@ func index(c *echo.Context) error {
 	}
 	count = count + 1
 	session.Values["count"] = count
-	session.Save(c.Request(), c.Response().Writer())
+	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
 	return c.Render(http.StatusOK, "index", "World")
 }
 
-func count(c *echo.Context) error {
-	session, _ := store.Get(c.Request(), session_name)
+func count(c echo.Context) error {
+	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
 	var count int
 	value := session.Values["count"]
 	if value == nil {
@@ -61,41 +62,41 @@ func count(c *echo.Context) error {
 	}
 	count = count + 1
 	session.Values["count"] = count
-	session.Save(c.Request(), c.Response().Writer())
+	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
 	return c.String(200, fmt.Sprint(count))
 }
 
-func signin(c *echo.Context) error {
+func signin(c echo.Context) error {
 	url, tempCred, err := anaconda.AuthorizationURL("http://127.0.0.1:8002/signin/callback")
 
 	if err != nil {
 		return c.String(200, err.Error())
 	}
 
-	session, _ := store.Get(c.Request(), session_name)
+	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
 	session.Values["request_token"] = tempCred.Token
 	session.Values["request_secret"] = tempCred.Secret
-	session.Save(c.Request(), c.Response().Writer())
+	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func callback(c *echo.Context) error {
-	session, _ := store.Get(c.Request(), session_name)
+func callback(c echo.Context) error {
+	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
 	token := session.Values["request_token"]
 	secret := session.Values["request_secret"]
 	tempCred := oauth.Credentials{
 		Token:  token.(string),
 		Secret: secret.(string),
 	}
-	cred, _, err := anaconda.GetCredentials(&tempCred, c.Query("oauth_verifier"))
+	cred, _, err := anaconda.GetCredentials(&tempCred, c.QueryParam("oauth_verifier"))
 	if err != nil {
 		return c.String(200, err.Error())
 	}
 
 	session.Values["access_token"] = cred.Token
 	session.Values["access_secret"] = cred.Secret
-	session.Save(c.Request(), c.Response().Writer())
+	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
 
 	api := anaconda.NewTwitterApi(cred.Token, cred.Secret)
 
@@ -164,8 +165,8 @@ func makeToken() string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func activity(c *echo.Context) error {
-	apiToken := c.Request().Header.Get("X-Justaway-API-Token")
+func activity(c echo.Context) error {
+	apiToken := c.Request().Header().Get("X-Justaway-API-Token")
 	if apiToken == "" {
 		return c.String(401, "Missing X-Justaway-API-Token header")
 	}

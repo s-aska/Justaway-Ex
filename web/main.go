@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
 	"io"
 	"os"
 )
@@ -12,7 +13,7 @@ type Template struct {
 	templates *template.Template
 }
 
-func (t *Template) Render(w io.Writer, name string, data interface{}) error {
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
@@ -36,5 +37,5 @@ func main() {
 	e.Get("/signin/", signin)
 	e.Get("/signin/callback", callback)
 	e.Get("/api/activity/list.json", activity)
-	e.Run("127.0.0.1:8002")
+	e.Run(standard.New("127.0.0.1:8002"))
 }

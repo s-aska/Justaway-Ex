@@ -11,7 +11,7 @@ type (
 	}
 )
 
-func start(c *echo.Context) error {
+func start(c echo.Context) error {
 	go crawler.Connect(c.Param("id"))
 
 	return c.JSON(200, &response{
@@ -19,7 +19,7 @@ func start(c *echo.Context) error {
 	})
 }
 
-func stop(c *echo.Context) error {
+func stop(c echo.Context) error {
 	go crawler.Disconnect(c.Param("id"))
 
 	return c.JSON(200, &response{

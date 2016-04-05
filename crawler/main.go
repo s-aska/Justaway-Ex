@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
 	"github.com/s-aska/anaconda"
 	"os"
 )
@@ -17,5 +18,5 @@ func main() {
 	e.Debug()
 	e.Get("/:id/start", start)
 	e.Get("/:id/stop", stop)
-	e.Run("127.0.0.1:8001")
+	e.Run(standard.New("127.0.0.1:8001"))
 }
