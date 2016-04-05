@@ -104,7 +104,7 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 						id,
 						data.InReplyToStatusIdStr,
 						"reply",
-						data.User.IdStr,
+						data.IdStr,
 						data.IdStr,
 						encodeJson(data))
 				}
