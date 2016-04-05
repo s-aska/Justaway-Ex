@@ -99,6 +99,14 @@ func connectStream(ch <-chan bool, id string, accessToken string, accessTokenSec
 						data.User.IdStr,
 						data.IdStr,
 						encodeJson(data))
+				} else if data.InReplyToUserIdStr == id {
+					go createActivityWithReferenceId(
+						id,
+						data.InReplyToStatusIdStr,
+						"reply",
+						data.User.IdStr,
+						data.IdStr,
+						encodeJson(data))
 				}
 
 			case anaconda.DirectMessage:
