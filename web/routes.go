@@ -163,3 +163,66 @@ func makeToken() string {
 	hasher.Write(b)
 	return hex.EncodeToString(hasher.Sum(nil))
 }
+
+func activity(c *echo.Context) error {
+	apiToken := c.Request().Header.Get("X-Justaway-API-Token")
+	if apiToken == "" {
+		return c.String(401, "Missing X-Justaway-API-Token header")
+	}
+
+	db, err := sql.Open("mysql", "root:@/justaway")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	stmtOut, err := db.Prepare("SELECT user_id FROM account WHERE api_token = ?")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtOut.Close()
+
+	var userIdStr string
+
+	err = stmtOut.QueryRow(apiToken).Scan(&userIdStr)
+	if err != nil {
+		return c.String(401, "Invalid X-Justaway-API-Token header")
+	}
+
+	stmtData, err := db.Prepare("SELECT id, data FROM activity WHERE user_id = ? ORDER BY id DESC LIMIT 200")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer stmtData.Close()
+
+	rows, err := stmtData.Query(userIdStr)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer rows.Close()
+
+	maxIdStr := ""
+	minIdStr := "null"
+	statuses := ""
+	count := 0
+	for rows.Next() {
+		count++
+		var id string
+		var data string
+		err = rows.Scan(&id, &data)
+		if err != nil {
+			panic(err.Error())
+		}
+		if statuses == "" {
+			statuses = data
+		} else {
+			statuses = statuses + "," + data
+		}
+		if maxIdStr == "" {
+			maxIdStr = "\""+id+"\""
+		}
+		minIdStr = "\""+id+"\""
+	}
+
+	return c.String(200, "{\"statuses\":["+statuses+"],\"max_id_str\":"+maxIdStr+",\"min_id_str\":"+minIdStr+"}")
+}

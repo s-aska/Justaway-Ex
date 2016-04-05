@@ -35,5 +35,6 @@ func main() {
 	e.Get("/count", count)
 	e.Get("/signin/", signin)
 	e.Get("/signin/callback", callback)
+	e.Get("/api/activity/list.json", activity)
 	e.Run("127.0.0.1:8002")
 }
