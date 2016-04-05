@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/labstack/echo"
 	"./crawler"
+	"github.com/labstack/echo"
 )
 
 type (
