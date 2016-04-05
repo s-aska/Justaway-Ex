@@ -2,26 +2,27 @@ package main
 
 import (
 	"github.com/labstack/echo"
+	"./crawler"
 )
 
 type (
 	response struct {
-		Message string
+		Success bool
 	}
 )
 
 func start(c *echo.Context) error {
-	go connect(c.Query("id"))
+	go crawler.Connect(c.Query("id"))
 
 	return c.JSON(200, &response{
-		Message: "start",
+		Success: true,
 	})
 }
 
 func stop(c *echo.Context) error {
-	go disconnect(c.Query("id"))
+	go crawler.Disconnect(c.Query("id"))
 
 	return c.JSON(200, &response{
-		Message: "stop",
+		Success: true,
 	})
 }
