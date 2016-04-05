@@ -26,6 +26,9 @@ CREATE TABLE account (
     screen_name         VARCHAR(64)
                         CHARACTER SET ascii
                         COLLATE ascii_bin    NOT NULL,
+    api_token           VARCHAR(64)
+                        CHARACTER SET ascii
+                        COLLATE ascii_bin    NOT NULL,
     access_token        VARCHAR(64)
                         CHARACTER SET ascii
                         COLLATE ascii_bin    NOT NULL,

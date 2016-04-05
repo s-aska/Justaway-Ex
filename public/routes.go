@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/md5"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/bradfitz/gomemcache/memcache"
@@ -116,14 +119,16 @@ func callback(c *echo.Context) error {
 			user_id,
 			name,
 			screen_name,
+			api_token,
 			access_token,
 			access_token_secret,
 			status,
 			created_on,
 			updated_on
-		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
 			name = VALUES(name),
 			screen_name = VALUES(screen_name),
+			api_token = VALUES(api_token),
 			access_token = VALUES(access_token),
 			access_token_secret = VALUES(access_token_secret),
 			status = VALUES(status),
@@ -134,7 +139,9 @@ func callback(c *echo.Context) error {
 	}
 	defer stmtIns.Close()
 
-	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
+	apiToken := makeToken()
+
+	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, apiToken, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
 	if err != nil {
 		panic(err.Error())
 	}
@@ -146,5 +153,13 @@ func callback(c *echo.Context) error {
 	byteArray, _ := ioutil.ReadAll(resp.Body)
 	fmt.Printf("request user_id:%s screen_name:%s res:%s\n", user.Id, user.ScreenName, string(byteArray))
 
-	return c.JSON(200, cred)
+	return c.Render(http.StatusOK, "index", apiToken)
+}
+
+func makeToken() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	hasher := md5.New()
+	hasher.Write(b)
+	return hex.EncodeToString(hasher.Sum(nil))
 }
