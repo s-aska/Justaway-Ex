@@ -32,8 +32,6 @@ func main() {
 	e.SetRenderer(t)
 
 	e.Debug()
-	e.Get("/", index)
-	e.Get("/count", count)
 	e.Get("/signin/", signin)
 	e.Get("/signin/callback", callback)
 	e.Get("/api/activity/list.json", activity)

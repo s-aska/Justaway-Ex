@@ -26,8 +26,8 @@ var store = func() *gsm.MemcacheStore {
 	var store = gsm.NewMemcacheStore(memcacheClient, "session_prefix_", []byte("secret-key-goes-here"))
 	store.Options = &sessions.Options{
 		MaxAge:   0,
-		Path:     "/",
-		Secure:   false,
+		Path:     "/signin/",
+		Secure:   true,
 		HttpOnly: true,
 	}
 	store.StoreMethod = gsm.StoreMethodGob
@@ -35,36 +35,6 @@ var store = func() *gsm.MemcacheStore {
 }()
 
 const session_name = "justaway_session"
-
-func index(c echo.Context) error {
-	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
-	var count int
-	value := session.Values["count"]
-	if value == nil {
-		count = 0
-	} else {
-		count = value.(int)
-	}
-	count = count + 1
-	session.Values["count"] = count
-	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
-	return c.Render(http.StatusOK, "index", "World")
-}
-
-func count(c echo.Context) error {
-	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
-	var count int
-	value := session.Values["count"]
-	if value == nil {
-		count = 0
-	} else {
-		count = value.(int)
-	}
-	count = count + 1
-	session.Values["count"] = count
-	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
-	return c.String(200, fmt.Sprint(count))
-}
 
 func signin(c echo.Context) error {
 	url, tempCred, err := anaconda.AuthorizationURL("https://justaway.info/signin/callback")
