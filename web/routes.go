@@ -190,7 +190,7 @@ func activity(c echo.Context) error {
 		} else {
 			events = events + "," + data
 		}
-		if maxIdStr == "" {
+		if maxIdStr == "null" {
 			maxIdStr = "\""+id+"\""
 		}
 		minIdStr = "\""+id+"\""
