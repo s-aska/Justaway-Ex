@@ -173,7 +173,7 @@ func activity(c echo.Context) error {
 	}
 	defer rows.Close()
 
-	maxIdStr := ""
+	maxIdStr := "null"
 	minIdStr := "null"
 	events := ""
 	count := 0
