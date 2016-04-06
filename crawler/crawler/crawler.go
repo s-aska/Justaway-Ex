@@ -7,6 +7,8 @@ import (
 )
 import _ "github.com/go-sql-driver/mysql"
 
+const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
+
 var m = new(sync.Mutex)
 var d = map[string]chan bool{}
 
@@ -19,7 +21,7 @@ func Connect(id string) {
 		return
 	}
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

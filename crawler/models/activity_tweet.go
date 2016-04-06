@@ -8,6 +8,8 @@ import (
 )
 import _ "github.com/go-sql-driver/mysql"
 
+const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
+
 func makeTweetUniqueId(statusId string, event string, sourceUserId string) string {
 	return strings.Join([]string{"tweet", statusId, event, sourceUserId}, ":")
 }
@@ -17,7 +19,7 @@ func CreateTweetActivity(userId string, statusId string, event string, sourceUse
 
 	fmt.Printf("[%s] CreateTweetActivity: %s\n", userId, uniqueId)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -50,7 +52,7 @@ func DeleteTweetActivity(statusId string, event string, sourceUserId string) {
 
 	fmt.Printf("[%s] DeleteTweetActivity: %s\n", "-", uniqueId)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -76,7 +78,7 @@ func DeleteTweetActivityByStatusId(statusId string) {
 
 	fmt.Printf("[%s] DeleteTweetActivityByStatusId: %s\n", "-", uniqueId)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -102,7 +104,7 @@ func CreateTweetActivityWithReferenceId(userId string, statusId string, event st
 
 	fmt.Printf("[%s] CreateTweetActivityWithReferenceId: %s %s\n", userId, uniqueId, referenceId)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -134,7 +136,7 @@ func CreateTweetActivityWithReferenceId(userId string, statusId string, event st
 func DeleteTweetActivityByReferenceId(referenceId string) {
 	fmt.Printf("[%s] DeleteTweetActivityByReferenceId: %s\n", "-", referenceId)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

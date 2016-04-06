@@ -34,7 +34,8 @@ var store = func() *gsm.MemcacheStore {
 	return store
 }()
 
-const session_name = "justaway_session"
+const sessionName = "justaway_session"
+const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
 
 func signin(c echo.Context) error {
 	url, tempCred, err := anaconda.AuthorizationURL("https://justaway.info/signin/callback")
@@ -43,7 +44,7 @@ func signin(c echo.Context) error {
 		return c.String(200, err.Error())
 	}
 
-	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
+	session, _ := store.Get(c.Request().(*standard.Request).Request, sessionName)
 	session.Values["request_token"] = tempCred.Token
 	session.Values["request_secret"] = tempCred.Secret
 	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
@@ -52,7 +53,7 @@ func signin(c echo.Context) error {
 }
 
 func callback(c echo.Context) error {
-	session, _ := store.Get(c.Request().(*standard.Request).Request, session_name)
+	session, _ := store.Get(c.Request().(*standard.Request).Request, sessionName)
 	token := session.Values["request_token"]
 	secret := session.Values["request_secret"]
 	tempCred := oauth.Credentials{
@@ -78,7 +79,7 @@ func callback(c echo.Context) error {
 	now := time.Now()
 	fmt.Printf("callback user_id:%s screen_name:%s name:%s\n", user.Id, user.ScreenName, user.Name)
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -141,7 +142,7 @@ func activity(c echo.Context) error {
 		return c.String(401, "Missing X-Justaway-API-Token header")
 	}
 
-	db, err := sql.Open("mysql", "root:@/justaway")
+	db, err := sql.Open("mysql", dbSource)
 	if err != nil {
 		panic(err.Error())
 	}
