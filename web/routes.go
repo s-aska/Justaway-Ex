@@ -118,14 +118,14 @@ func callback(c echo.Context) error {
 		panic(err.Error())
 	}
 
-	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/"+strconv.FormatInt(user.Id, 10)+"/start", nil)
+	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/"+user.IdStr+"/start", nil)
 	client := new(http.Client)
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()
 	byteArray, _ := ioutil.ReadAll(resp.Body)
-	fmt.Printf("request user_id:%s screen_name:%s res:%s\n", user.Id, user.ScreenName, string(byteArray))
+	fmt.Printf("request user_id:%s screen_name:%s res:%s\n", user.IdStr, user.ScreenName, string(byteArray))
 
-	return c.Render(http.StatusOK, "index", apiToken)
+	return c.Render(http.StatusOK, "index", user.IdStr+"-"+apiToken)
 }
 
 func makeToken() string {
