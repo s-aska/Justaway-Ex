@@ -48,7 +48,7 @@ func signin(c echo.Context) error {
 	session.Values["request_secret"] = tempCred.Secret
 	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
 
-	return c.Redirect(http.StatusTemporaryRedirect, url)
+	return c.Redirect(http.StatusTemporaryRedirect, url+"&force_login=true")
 }
 
 func callback(c echo.Context) error {
