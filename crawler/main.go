@@ -16,6 +16,9 @@ func main() {
 
 	e := echo.New()
 	e.Debug()
+	e.Get("/startup", startup)
+	e.Get("/shutdown", shutdown)
+	e.Get("/status", status)
 	e.Get("/:id/start", start)
 	e.Get("/:id/stop", stop)
 	e.Run(standard.New("127.0.0.1:8001"))
