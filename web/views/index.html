@@ -63,7 +63,10 @@
             location.href = 'justaway://ex/callback/{{.}}';
           }, 200);
         });
-      })
+      });
+      setTimeout(function(){
+        location.href = 'justaway://ex/callback/{{.}}';
+      }, 5000);
     });
     </script>
   </head>
