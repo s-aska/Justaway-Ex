@@ -60,7 +60,7 @@
       img.click(function(e){
         img.animate({top: '-1000px'}, function(){
           setTimeout(function(){
-            location.href = 'justaway://?api_token={{.}}';
+            location.href = 'justaway://ex/callback/{{.}}';
           }, 200);
         });
       })
@@ -75,7 +75,7 @@
       </div>
       <p class="text-center"><img class="logo" src="https://justaway.info/img/logo.svg" width="192" type="image/svg+xml"></p>
       <p class="text-center text-muted" style="font-family: Raleway;">Connected successfully</p>
-      <p class="text-center text-muted" style="font-family: Raleway;font-size: 24px"><a href="justaway://?api_token={{.}}">Back to the app</a></p>
+      <p class="text-center text-muted" style="font-family: Raleway;font-size: 24px"><a href="justaway://ex/callback/{{.}}">Back to the app</a></p>
       <footer>
         <p>
           Portions of this page are modifications based on work created and <a href="http://code.google.com/policies.html">shared by Google</a> and used
