@@ -77,18 +77,20 @@ CREATE TABLE notification_device (
 DROP TABLE IF EXISTS activity;
 CREATE TABLE activity (
     id                  BIGINT UNSIGNED      NOT NULL AUTO_INCREMENT,
-    user_id             BIGINT UNSIGNED      NOT NULL,
-    reference_id        BIGINT UNSIGNED      NULL,
-    unique_id           VARCHAR(255)
+    event               VARCHAR(32)
                         CHARACTER SET ascii
                         COLLATE ascii_bin    NOT NULL,
-    data                MEDIUMBLOB           NOT NULL,
+    target_id           BIGINT UNSIGNED      NOT NULL,
+    source_id           BIGINT UNSIGNED      NOT NULL,
+    target_object_id    BIGINT UNSIGNED      NOT NULL,
+    retweeted_status_id BIGINT UNSIGNED      NULL,
     created_on          INTEGER UNSIGNED     NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE (unique_id),
-    UNIQUE (reference_id),
-    KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    UNIQUE (target_id, source_id, target_object_id),
+    KEY (target_object_id),
+    KEY (retweeted_status_id),
+    KEY (target_id)
+) ENGINE=InnoDB DEFAULT CHARSET=ascii;
 
 DROP TABLE IF EXISTS favorite;
 CREATE TABLE favorite (

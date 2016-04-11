@@ -3,23 +3,21 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"strings"
-	"time"
 )
 import _ "github.com/go-sql-driver/mysql"
 
-const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
-
-func makeTweetUniqueId(statusId string, event string, sourceUserId string) string {
-	return strings.Join([]string{"tweet", statusId, event, sourceUserId}, ":")
+type Model struct {
+	dbSource string
 }
 
-func CreateTweetActivity(userId string, statusId string, event string, sourceUserId string, data string) {
-	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
+func New(dbSource string) *Model {
+	return &Model{
+		dbSource: dbSource,
+	}
+}
 
-	fmt.Printf("[%s] CreateTweetActivity: %s\n", userId, uniqueId)
-
-	db, err := sql.Open("mysql", dbSource)
+func (m *Model) CreateActivity(event string, targetId string, sourceId string, targetObjectId string, timestamp int64) {
+	db, err := sql.Open("mysql", m.dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -28,95 +26,10 @@ func CreateTweetActivity(userId string, statusId string, event string, sourceUse
 
 	stmtIns, err := db.Prepare(`
 		INSERT IGNORE INTO activity(
-			user_id,
-			unique_id,
-			data,
-			created_on
-		) VALUES(?, ?, ?, ?)
-	`)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer stmtIns.Close()
-
-	_, err = stmtIns.Exec(userId, uniqueId, data, time.Now().Unix())
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-}
-
-func DeleteTweetActivity(statusId string, event string, sourceUserId string) {
-	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
-
-	fmt.Printf("[%s] DeleteTweetActivity: %s\n", "-", uniqueId)
-
-	db, err := sql.Open("mysql", dbSource)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer db.Close()
-
-	stmtDel, err := db.Prepare("DELETE FROM activity WHERE unique_id = ?")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer stmtDel.Close()
-
-	_, err = stmtDel.Exec(uniqueId)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-}
-
-func DeleteTweetActivityByStatusId(statusId string) {
-	uniqueId := strings.Join([]string{"tweet", statusId, "%"}, ":")
-
-	fmt.Printf("[%s] DeleteTweetActivityByStatusId: %s\n", "-", uniqueId)
-
-	db, err := sql.Open("mysql", dbSource)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer db.Close()
-
-	stmtDel, err := db.Prepare("DELETE FROM activity WHERE unique_id LIKE ?")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer stmtDel.Close()
-
-	_, err = stmtDel.Exec(uniqueId)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-}
-
-func CreateTweetActivityWithReferenceId(userId string, statusId string, event string, sourceUserId string, referenceId string, data string) {
-	uniqueId := makeTweetUniqueId(statusId, event, sourceUserId)
-
-	fmt.Printf("[%s] CreateTweetActivityWithReferenceId: %s %s\n", userId, uniqueId, referenceId)
-
-	db, err := sql.Open("mysql", dbSource)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer db.Close()
-
-	stmtIns, err := db.Prepare(`
-		INSERT IGNORE INTO activity(
-			user_id,
-			unique_id,
-			reference_id,
-			data,
+			event,
+			target_id,
+			source_id,
+			target_object_id,
 			created_on
 		) VALUES(?, ?, ?, ?, ?)
 	`)
@@ -126,31 +39,100 @@ func CreateTweetActivityWithReferenceId(userId string, statusId string, event st
 	}
 	defer stmtIns.Close()
 
-	_, err = stmtIns.Exec(userId, uniqueId, referenceId, data, time.Now().Unix())
+	_, err = stmtIns.Exec(event, targetId, sourceId, targetObjectId, timestamp)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 }
 
-func DeleteTweetActivityByReferenceId(referenceId string) {
-	fmt.Printf("[%s] DeleteTweetActivityByReferenceId: %s\n", "-", referenceId)
-
-	db, err := sql.Open("mysql", dbSource)
+func (m *Model) CreateRetweetActivity(event string, targetId string, sourceId string, targetObjectId string, retweeetedStatusId string, timestamp int64) {
+	db, err := sql.Open("mysql", m.dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	defer db.Close()
 
-	stmtDel, err := db.Prepare("DELETE FROM activity WHERE reference_id = ?")
+	stmtIns, err := db.Prepare(`
+		INSERT IGNORE INTO activity(
+			event,
+			target_id,
+			source_id,
+			target_object_id,
+			retweeted_status_id,
+			created_on
+		) VALUES(?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	defer stmtIns.Close()
+
+	_, err = stmtIns.Exec(event, targetId, sourceId, targetObjectId, retweeetedStatusId, timestamp)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+}
+
+func (m *Model) DeleteTweetActivity(statusId string) {
+	fmt.Printf("DeleteTweetActivity: %s\n", statusId)
+	db, err := sql.Open("mysql", m.dbSource)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	defer db.Close()
+
+	func() {
+		stmtDel, err := db.Prepare("DELETE FROM activity WHERE retweeted_status_id = ?")
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		defer stmtDel.Close()
+
+		_, err = stmtDel.Exec(statusId)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+	}()
+
+	func() {
+		stmtDel, err := db.Prepare("DELETE FROM activity WHERE target_object_id = ? AND event IN ('reply', 'retweet', 'quoted_tweet', 'favorite', 'favorited_retweet', 'retweeted_retweet')")
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		defer stmtDel.Close()
+
+		_, err = stmtDel.Exec(statusId)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+	}()
+}
+
+func (m *Model) DeleteFavoriteActivity(sourceId string, statusId string) {
+	db, err := sql.Open("mysql", m.dbSource)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	defer db.Close()
+
+	stmtDel, err := db.Prepare("DELETE FROM activity WHERE event = 'favorite' AND source_id = ? AND target_object_id = ?")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	defer stmtDel.Close()
 
-	_, err = stmtDel.Exec(referenceId)
+	_, err = stmtDel.Exec(sourceId, statusId)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

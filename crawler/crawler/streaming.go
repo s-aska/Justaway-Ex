@@ -3,11 +3,10 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/s-aska/Justaway-Ex/crawler/handlers"
 	"github.com/s-aska/anaconda"
 )
 
-func connectStream(ch <-chan bool, userId string, accessToken string, accessTokenSecret string) {
+func (c *Crawler) connectStream(ch <-chan bool, userId string, accessToken string, accessTokenSecret string) {
 	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 	api.SetLogger(anaconda.BasicLogger)
 	s := api.UserStream(nil)
@@ -18,22 +17,22 @@ func connectStream(ch <-chan bool, userId string, accessToken string, accessToke
 			if !ok {
 				fmt.Printf("[%s] disconnect\n", userId)
 				s.Stop()
-				cleanup(userId)
+				c.cleanup(userId)
 				return
 			}
 			switch data := x.(type) {
 			case anaconda.FriendsList:
 				fmt.Printf("[%s] connected\n", userId)
 			case anaconda.Tweet:
-				go handlers.HandlerTweet(userId, data)
+				go c.hander.HandlerTweet(userId, data)
 			case anaconda.DirectMessage:
-				go handlers.HandlerDirectMessage(userId, data)
+				go c.hander.HandlerDirectMessage(userId, data)
 			case anaconda.StatusDeletionNotice:
-				go handlers.HandlerStatusDeletionNotice(data)
+				go c.hander.HandlerStatusDeletionNotice(data)
 			case anaconda.DirectMessageDeletionNotice:
-				go handlers.HandlerDirectMessageDeletionNotice(userId, data)
+				go c.hander.HandlerDirectMessageDeletionNotice(userId, data)
 			case anaconda.EventTweet:
-				go handlers.HandlerEventTweet(userId, data)
+				go c.hander.HandlerEventTweet(userId, data)
 			case anaconda.EventList:
 				fmt.Printf("[%s] eventList: %s %s\n", userId, data.Event.Event, encodeJson(data))
 			case anaconda.Event:
@@ -41,14 +40,14 @@ func connectStream(ch <-chan bool, userId string, accessToken string, accessToke
 			case anaconda.DisconnectMessage:
 				fmt.Printf("[%s] disconnectMessage\n", userId)
 				s.Stop()
-				cleanup(userId)
+				c.cleanup(userId)
 			default:
 				fmt.Printf("[%s] unknown type(%T) : %v\n", userId, x, x)
 			}
 		case <-ch:
 			fmt.Printf("[%s] stop\n", userId)
 			s.Stop()
-			cleanup(userId)
+			c.cleanup(userId)
 			return
 		}
 	}

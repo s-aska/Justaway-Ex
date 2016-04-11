@@ -16,34 +16,48 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 import _ "github.com/go-sql-driver/mysql"
 
-var store = func() *gsm.MemcacheStore {
+const sessionName = "justaway_session"
+
+type Router struct {
+	dbSource string
+	callback string
+	sessionStore *gsm.MemcacheStore
+}
+
+func NewRouter(dbSource string, callback string) *Router {
+	return &Router{
+		dbSource: dbSource,
+		callback: callback,
+		sessionStore: NewSessionStore(strings.HasPrefix(callback, "https")),
+	}
+}
+
+func NewSessionStore(secure bool) *gsm.MemcacheStore {
 	var memcacheClient = memcache.New("localhost:11211")
 	var store = gsm.NewMemcacheStore(memcacheClient, "session_prefix_", []byte("secret-key-goes-here"))
 	store.Options = &sessions.Options{
 		MaxAge:   0,
 		Path:     "/signin/",
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: true,
 	}
 	store.StoreMethod = gsm.StoreMethodGob
 	return store
-}()
+}
 
-const sessionName = "justaway_session"
-const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
-
-func signin(c echo.Context) error {
-	url, tempCred, err := anaconda.AuthorizationURL("https://justaway.info/signin/callback")
+func (r *Router) signin(c echo.Context) error {
+	url, tempCred, err := anaconda.AuthorizationURL(r.callback)
 
 	if err != nil {
 		return c.String(200, err.Error())
 	}
 
-	session, _ := store.Get(c.Request().(*standard.Request).Request, sessionName)
+	session, _ := r.sessionStore.Get(c.Request().(*standard.Request).Request, sessionName)
 	session.Values["request_token"] = tempCred.Token
 	session.Values["request_secret"] = tempCred.Secret
 	session.Save(c.Request().(*standard.Request).Request, c.Response().(*standard.Response).ResponseWriter)
@@ -51,8 +65,8 @@ func signin(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, url+"&force_login=true")
 }
 
-func callback(c echo.Context) error {
-	session, _ := store.Get(c.Request().(*standard.Request).Request, sessionName)
+func (r *Router) signinCallback(c echo.Context) error {
+	session, _ := r.sessionStore.Get(c.Request().(*standard.Request).Request, sessionName)
 	token := session.Values["request_token"]
 	secret := session.Values["request_secret"]
 	tempCred := oauth.Credentials{
@@ -78,7 +92,7 @@ func callback(c echo.Context) error {
 	now := time.Now()
 	fmt.Printf("callback user_id:%s screen_name:%s name:%s\n", user.Id, user.ScreenName, user.Name)
 
-	db, err := sql.Open("mysql", dbSource)
+	db, err := sql.Open("mysql", r.dbSource)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -110,7 +124,7 @@ func callback(c echo.Context) error {
 	}
 	defer stmtIns.Close()
 
-	apiToken := makeToken()
+	apiToken := r.makeToken()
 
 	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, apiToken, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
 	if err != nil {
@@ -127,7 +141,7 @@ func callback(c echo.Context) error {
 	return c.Render(http.StatusOK, "index", user.IdStr+"-"+apiToken)
 }
 
-func makeToken() string {
+func (r *Router) makeToken() string {
 	b := make([]byte, 32)
 	rand.Read(b)
 	hasher := md5.New()
@@ -135,13 +149,13 @@ func makeToken() string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func activity(c echo.Context) error {
+func (r *Router) activity(c echo.Context) error {
 	apiToken := c.Request().Header().Get("X-Justaway-API-Token")
 	if apiToken == "" {
 		return c.String(401, "Missing X-Justaway-API-Token header")
 	}
 
-	db, err := sql.Open("mysql", dbSource)
+	db, err := sql.Open("mysql", r.dbSource)
 	if err != nil {
 		panic(err.Error())
 	}

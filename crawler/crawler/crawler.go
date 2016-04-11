@@ -3,17 +3,29 @@ package crawler
 import (
 	"database/sql"
 	"fmt"
+	"github.com/s-aska/Justaway-Ex/crawler/handlers"
 	"sync"
 )
 import _ "github.com/go-sql-driver/mysql"
 
-const crawlerId = "1"
-const dbSource = "justaway@tcp(192.168.0.10:3306)/justaway"
+type Crawler struct {
+	crawlerId string
+	dbSource string
+	hander *handlers.Handler
+}
+
+func New(crawlerId string, dbSource string, hander *handlers.Handler) *Crawler {
+	return &Crawler{
+		crawlerId: crawlerId,
+		dbSource: dbSource,
+		hander: hander,
+	}
+}
 
 var m = new(sync.Mutex)
 var d = map[string]chan bool{}
 
-func Count() int {
+func (c *Crawler) Count() int {
 	m.Lock()
 	defer m.Unlock()
 
@@ -26,7 +38,7 @@ func Count() int {
 	return count
 }
 
-func DisconnectAll() {
+func (c *Crawler) DisconnectAll() {
 	m.Lock()
 	defer m.Unlock()
 
@@ -40,13 +52,13 @@ func DisconnectAll() {
 	fmt.Println("[DisconnectAll] end")
 }
 
-func ConnectAll() {
+func (c *Crawler) ConnectAll() {
 	m.Lock()
 	defer m.Unlock()
 
 	fmt.Println("[ConnectAll] begin")
 
-	db, err := sql.Open("mysql", dbSource)
+	db, err := sql.Open("mysql", c.dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -60,7 +72,7 @@ func ConnectAll() {
 	}
 	defer stmtOut.Close()
 
-	rows, err := stmtOut.Query(crawlerId)
+	rows, err := stmtOut.Query(c.crawlerId)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -83,13 +95,13 @@ func ConnectAll() {
 
 		ch := make(chan bool)
 		d[userId] = ch
-		go connectStream(ch, userId, accessToken, accessTokenSecret)
+		go c.connectStream(ch, userId, accessToken, accessTokenSecret)
 	}
 
 	fmt.Println("[ConnectAll] end")
 }
 
-func Connect(userId string) {
+func (c *Crawler) Connect(userId string) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -98,7 +110,7 @@ func Connect(userId string) {
 		return
 	}
 
-	db, err := sql.Open("mysql", dbSource)
+	db, err := sql.Open("mysql", c.dbSource)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -125,10 +137,10 @@ func Connect(userId string) {
 
 	ch := make(chan bool)
 	d[userId] = ch
-	go connectStream(ch, userId, accessToken, accessTokenSecret)
+	go c.connectStream(ch, userId, accessToken, accessTokenSecret)
 }
 
-func Disconnect(userId string) {
+func (c *Crawler) Disconnect(userId string) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -138,7 +150,7 @@ func Disconnect(userId string) {
 	}
 }
 
-func cleanup(userId string) {
+func (c *Crawler) cleanup(userId string) {
 	m.Lock()
 	defer m.Unlock()
 

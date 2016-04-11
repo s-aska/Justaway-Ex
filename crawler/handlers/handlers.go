@@ -1,10 +1,15 @@
 package handlers
 
 import (
-	"encoding/json"
+	"github.com/s-aska/Justaway-Ex/crawler/models"
 )
 
-func encodeJson(d interface{}) (j string) {
-	b, _ := json.Marshal(d)
-	return string(b)
+type Handler struct {
+	model *models.Model
+}
+
+func New(model *models.Model) *Handler {
+	return &Handler{
+		model: model,
+	}
 }

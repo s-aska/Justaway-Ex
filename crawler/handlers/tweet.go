@@ -1,39 +1,47 @@
 package handlers
 
 import (
-	"github.com/s-aska/Justaway-Ex/crawler/models"
 	"github.com/s-aska/anaconda"
+	"time"
 )
 
-func HandlerTweet(userIdStr string, data anaconda.Tweet) {
+func (h *Handler) HandlerTweet(userIdStr string, data anaconda.Tweet) {
 	if data.RetweetedStatus != nil && data.RetweetedStatus.User.IdStr == userIdStr {
-		handlerTweetRetweeted(data)
+		h.handlerTweetRetweeted(data)
 	} else if data.InReplyToUserIdStr == userIdStr {
-		handlerTweetReply(data)
+		h.handlerTweetReply(data)
 	}
 }
 
-func handlerTweetRetweeted(data anaconda.Tweet) {
-	models.CreateTweetActivityWithReferenceId(
-		data.RetweetedStatus.User.IdStr,
-		data.RetweetedStatus.IdStr,
+func (h *Handler) handlerTweetRetweeted(data anaconda.Tweet) {
+	createdAtTime, err := data.CreatedAtTime()
+	if err != nil {
+		createdAtTime = time.Now()
+	}
+	h.model.CreateRetweetActivity(
 		"retweet",
+		data.RetweetedStatus.User.IdStr,
 		data.User.IdStr,
 		data.IdStr,
-		encodeJson(data))
+		data.RetweetedStatus.IdStr,
+		createdAtTime.Unix(),
+	)
 }
 
-func handlerTweetReply(data anaconda.Tweet) {
-	models.CreateTweetActivityWithReferenceId(
-		data.InReplyToUserIdStr,
-		data.InReplyToStatusIdStr,
+func (h *Handler) handlerTweetReply(data anaconda.Tweet) {
+	createdAtTime, err := data.CreatedAtTime()
+	if err != nil {
+		createdAtTime = time.Now()
+	}
+	h.model.CreateActivity(
 		"reply",
+		data.InReplyToUserIdStr,
+		data.User.IdStr,
 		data.IdStr,
-		data.IdStr,
-		encodeJson(data))
+		createdAtTime.Unix(),
+	)
 }
 
-func HandlerStatusDeletionNotice(data anaconda.StatusDeletionNotice) {
-	models.DeleteTweetActivityByStatusId(data.IdStr)
-	models.DeleteTweetActivityByReferenceId(data.IdStr)
+func (h *Handler) HandlerStatusDeletionNotice(data anaconda.StatusDeletionNotice) {
+	h.model.DeleteTweetActivity(data.IdStr)
 }

@@ -20,6 +20,8 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 func main() {
 	consumerKey := os.Getenv("CONSUMER_KEY")
 	consumerSecret := os.Getenv("CONSUMER_SECRET")
+	dbSource := os.Getenv("JUSTAWAY_EX_DB_SOURCE") // ex. justaway@tcp(192.168.0.10:3306)/justaway
+	callback := os.Getenv("JUSTAWAY_EX_CALLBACK") // ex. https://justaway.info/signin/callback
 
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
@@ -31,9 +33,11 @@ func main() {
 	}
 	e.SetRenderer(t)
 
+	r := NewRouter(dbSource, callback)
+
 	e.Debug()
-	e.Get("/signin/", signin)
-	e.Get("/signin/callback", callback)
-	e.Get("/api/activity/list.json", activity)
+	e.Get("/signin/", r.signin)
+	e.Get("/signin/callback", r.signinCallback)
+	e.Get("/api/activity/list.json", r.activity)
 	e.Run(standard.New("127.0.0.1:8002"))
 }
