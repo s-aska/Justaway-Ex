@@ -21,7 +21,7 @@ func main() {
 	consumerKey := os.Getenv("CONSUMER_KEY")
 	consumerSecret := os.Getenv("CONSUMER_SECRET")
 	dbSource := os.Getenv("JUSTAWAY_EX_DB_SOURCE") // ex. justaway@tcp(192.168.0.10:3306)/justaway
-	callback := os.Getenv("JUSTAWAY_EX_CALLBACK") // ex. https://justaway.info/signin/callback
+	callback := os.Getenv("JUSTAWAY_EX_CALLBACK")  // ex. https://justaway.info/signin/callback
 
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)

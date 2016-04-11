@@ -10,15 +10,15 @@ import _ "github.com/go-sql-driver/mysql"
 
 type Crawler struct {
 	crawlerId string
-	dbSource string
-	hander *handlers.Handler
+	dbSource  string
+	hander    *handlers.Handler
 }
 
 func New(crawlerId string, dbSource string, hander *handlers.Handler) *Crawler {
 	return &Crawler{
 		crawlerId: crawlerId,
-		dbSource: dbSource,
-		hander: hander,
+		dbSource:  dbSource,
+		hander:    hander,
 	}
 }
 

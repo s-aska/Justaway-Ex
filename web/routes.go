@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/bradfitz/gomemcache/memcache"
@@ -24,15 +25,37 @@ import _ "github.com/go-sql-driver/mysql"
 const sessionName = "justaway_session"
 
 type Router struct {
-	dbSource string
-	callback string
+	dbSource     string
+	callback     string
 	sessionStore *gsm.MemcacheStore
+}
+
+type JsonNullInt64 struct {
+	sql.NullInt64
+}
+
+func (v JsonNullInt64) MarshalJSON() ([]byte, error) {
+	if v.Valid {
+		return json.Marshal(v.Int64)
+	} else {
+		return json.Marshal(nil)
+	}
+}
+
+type Activity struct {
+	Id                int64         `json:"id"`
+	Event             string        `json:"event"`
+	TargetId          int64         `json:"target_id"`
+	SourceId          int64         `json:"source_id"`
+	TargetObjectId    int64         `json:"target_object_id"`
+	RetweetedStatusId JsonNullInt64 `json:"retweeted_status_id"`
+	CreatedOn         int           `json:"created_on"`
 }
 
 func NewRouter(dbSource string, callback string) *Router {
 	return &Router{
-		dbSource: dbSource,
-		callback: callback,
+		dbSource:     dbSource,
+		callback:     callback,
 		sessionStore: NewSessionStore(strings.HasPrefix(callback, "https")),
 	}
 }
@@ -174,7 +197,7 @@ func (r *Router) activity(c echo.Context) error {
 		return c.String(401, "Invalid X-Justaway-API-Token header")
 	}
 
-	stmtData, err := db.Prepare("SELECT id, data FROM activity WHERE user_id = ? ORDER BY id DESC LIMIT 200")
+	stmtData, err := db.Prepare("SELECT id, event, target_id, source_id, target_object_id, retweeted_status_id, created_on FROM activity WHERE target_id = ? ORDER BY id DESC LIMIT 200")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -186,28 +209,31 @@ func (r *Router) activity(c echo.Context) error {
 	}
 	defer rows.Close()
 
-	maxIdStr := "null"
-	minIdStr := "null"
-	events := ""
-	count := 0
+	events := []*Activity{}
+
 	for rows.Next() {
-		count++
-		var id string
-		var data string
-		err = rows.Scan(&id, &data)
+		var id int64
+		var event string
+		var targetId int64
+		var sourceId int64
+		var targetObjectId int64
+		var retweetedStatusId JsonNullInt64
+		var createdOn int
+		err = rows.Scan(&id, &event, &targetId, &sourceId, &targetObjectId, &retweetedStatusId, &createdOn)
 		if err != nil {
 			panic(err.Error())
 		}
-		if events == "" {
-			events = data
-		} else {
-			events = events + "," + data
+		a := &Activity{
+			Id:                id,
+			Event:             event,
+			TargetId:          targetId,
+			SourceId:          sourceId,
+			TargetObjectId:    targetObjectId,
+			RetweetedStatusId: retweetedStatusId,
+			CreatedOn:         createdOn,
 		}
-		if maxIdStr == "null" {
-			maxIdStr = "\""+id+"\""
-		}
-		minIdStr = "\""+id+"\""
+		events = append(events, a)
 	}
 
-	return c.String(200, "{\"events\":["+events+"],\"max_id_str\":"+maxIdStr+",\"min_id_str\":"+minIdStr+"}")
+	return c.JSON(200, events)
 }

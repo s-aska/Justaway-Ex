@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
-	"github.com/s-aska/anaconda"
 	"github.com/s-aska/Justaway-Ex/crawler/crawler"
 	"github.com/s-aska/Justaway-Ex/crawler/handlers"
 	"github.com/s-aska/Justaway-Ex/crawler/models"
+	"github.com/s-aska/anaconda"
 	"os"
 )
 
@@ -14,7 +14,7 @@ func main() {
 	consumerKey := os.Getenv("CONSUMER_KEY")
 	consumerSecret := os.Getenv("CONSUMER_SECRET")
 	crawlerId := os.Getenv("JUSTAWAY_EX_CRAWLER_ID") // ex. 1
-	dbSource := os.Getenv("JUSTAWAY_EX_DB_SOURCE") // ex. justaway@tcp(192.168.0.10:3306)/justaway
+	dbSource := os.Getenv("JUSTAWAY_EX_DB_SOURCE")   // ex. justaway@tcp(192.168.0.10:3306)/justaway
 
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)

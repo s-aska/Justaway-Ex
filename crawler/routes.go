@@ -12,7 +12,6 @@ type (
 	responseCount struct {
 		Count int
 	}
-
 )
 
 type Router struct {
