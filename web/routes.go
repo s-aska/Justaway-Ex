@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"database/sql"
+	// "encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -14,9 +15,11 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
+	sq "gopkg.in/Masterminds/squirrel.v1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -30,26 +33,55 @@ type Router struct {
 	sessionStore *gsm.MemcacheStore
 }
 
-type JsonNullInt64 struct {
-	sql.NullInt64
+// NullUint64 is a sql.Scanner for unsigned ints.
+type NullUint64 struct {
+	Uint64 uint64
+	Valid  bool
 }
 
-func (v JsonNullInt64) MarshalJSON() ([]byte, error) {
+// Scan implements the sql.Scanner interface.
+func (n *NullUint64) Scan(src interface{}) error {
+	if src == nil {
+		n.Uint64, n.Valid = 0, false
+		return nil
+	}
+	n.Valid = true
+	s := asString(src)
+	var err error
+	n.Uint64, err = strconv.ParseUint(s, 10, 64)
+	return err
+}
+
+func asString(src interface{}) string {
+	switch v := src.(type) {
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	}
+	return fmt.Sprintf("%v", src)
+}
+
+type JsonNullUInt64 struct {
+	NullUint64
+}
+
+func (v JsonNullUInt64) MarshalJSON() ([]byte, error) {
 	if v.Valid {
-		return json.Marshal(v.Int64)
+		return json.Marshal(v.Uint64)
 	} else {
 		return json.Marshal(nil)
 	}
 }
 
 type Activity struct {
-	Id                int64         `json:"id"`
-	Event             string        `json:"event"`
-	TargetId          int64         `json:"target_id"`
-	SourceId          int64         `json:"source_id"`
-	TargetObjectId    int64         `json:"target_object_id"`
-	RetweetedStatusId JsonNullInt64 `json:"retweeted_status_id"`
-	CreatedOn         int           `json:"created_on"`
+	Id                uint64         `json:"id"`
+	Event             string         `json:"event"`
+	TargetId          uint64         `json:"target_id"`
+	SourceId          uint64         `json:"source_id"`
+	TargetObjectId    uint64         `json:"target_object_id"`
+	RetweetedStatusId JsonNullUInt64 `json:"retweeted_status_id"`
+	CreatedOn         int            `json:"created_on"`
 }
 
 func NewRouter(dbSource string, callback string) *Router {
@@ -197,13 +229,56 @@ func (r *Router) activity(c echo.Context) error {
 		return c.String(401, "Invalid X-Justaway-API-Token header")
 	}
 
-	stmtData, err := db.Prepare("SELECT id, event, target_id, source_id, target_object_id, retweeted_status_id, created_on FROM activity WHERE target_id = ? ORDER BY id DESC LIMIT 200")
+	toId := func(id string) string {
+		if id == "" {
+			return ""
+		} else if strings.Contains(id, ":") {
+			fields := strings.Split(id, ":")
+			stmtOut, err := db.Prepare("SELECT id FROM activity WHERE target_object_id = ? AND event = ? AND target_id = ? AND source_id = ? LIMIT 1")
+			if err != nil {
+				fmt.Println(err.Error())
+				return ""
+			}
+			defer stmtOut.Close()
+			var dbId string
+			fmt.Printf("target_object_id:%s event:%s target_id:%s source_id:%s\n", fields[0], fields[1], fields[2], fields[3])
+			err = stmtOut.QueryRow(fields[0], fields[1], fields[2], fields[3]).Scan(&dbId)
+			if err != nil {
+				fmt.Println(err.Error())
+				return ""
+			}
+			return dbId
+		} else {
+			return id
+		}
+	}
+
+	maxId := toId(c.QueryParam("max_id"))
+	sinceId := toId(c.QueryParam("since_id"))
+
+	stmt := sq.
+		Select("id, event, target_id, source_id, target_object_id, retweeted_status_id, created_on").
+		From("activity").
+		Where(sq.Eq{"target_id": userIdStr}).
+		OrderBy("id DESC").
+		Limit(200)
+
+	if maxId != "" {
+		stmt = stmt.Where(sq.Gt{"id": maxId})
+	}
+
+	if sinceId != "" {
+		stmt = stmt.Where(sq.LtOrEq{"id": sinceId})
+	}
+
+	sql, args, err := stmt.ToSql()
 	if err != nil {
 		panic(err.Error())
 	}
-	defer stmtData.Close()
 
-	rows, err := stmtData.Query(userIdStr)
+	fmt.Printf("maxId:%s sinceId:%s sql:%s\n", maxId, sinceId, sql)
+
+	rows, err := db.Query(sql, args...)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -212,12 +287,12 @@ func (r *Router) activity(c echo.Context) error {
 	events := []*Activity{}
 
 	for rows.Next() {
-		var id int64
+		var id uint64
 		var event string
-		var targetId int64
-		var sourceId int64
-		var targetObjectId int64
-		var retweetedStatusId JsonNullInt64
+		var targetId uint64
+		var sourceId uint64
+		var targetObjectId uint64
+		var retweetedStatusId JsonNullUInt64
 		var createdOn int
 		err = rows.Scan(&id, &event, &targetId, &sourceId, &targetObjectId, &retweetedStatusId, &createdOn)
 		if err != nil {

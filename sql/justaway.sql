@@ -86,8 +86,7 @@ CREATE TABLE activity (
     retweeted_status_id BIGINT UNSIGNED      NULL,
     created_on          INTEGER UNSIGNED     NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE (target_id, source_id, target_object_id),
-    KEY (target_object_id),
+    UNIQUE (target_object_id, event, target_id, source_id),
     KEY (retweeted_status_id),
     KEY (target_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=ascii;
