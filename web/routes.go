@@ -264,11 +264,11 @@ func (r *Router) activity(c echo.Context) error {
 		Limit(200)
 
 	if maxId != "" {
-		stmt = stmt.Where(sq.Gt{"id": maxId})
+		stmt = stmt.Where(sq.LtOrEq{"id": maxId})
 	}
 
 	if sinceId != "" {
-		stmt = stmt.Where(sq.LtOrEq{"id": sinceId})
+		stmt = stmt.Where(sq.GtOrEq{"id": sinceId})
 	}
 
 	sql, args, err := stmt.ToSql()
