@@ -4,74 +4,26 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"database/sql"
-	// "encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/bradleypeabody/gorilla-sessions-memcache"
 	"github.com/garyburd/go-oauth/oauth"
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	sq "gopkg.in/Masterminds/squirrel.v1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
 import _ "github.com/go-sql-driver/mysql"
 
-const sessionName = "justaway_session"
-
 type Router struct {
 	dbSource     string
 	callback     string
 	sessionStore *gsm.MemcacheStore
-}
-
-// NullUint64 is a sql.Scanner for unsigned ints.
-type NullUint64 struct {
-	Uint64 uint64
-	Valid  bool
-}
-
-// Scan implements the sql.Scanner interface.
-func (n *NullUint64) Scan(src interface{}) error {
-	if src == nil {
-		n.Uint64, n.Valid = 0, false
-		return nil
-	}
-	n.Valid = true
-	s := asString(src)
-	var err error
-	n.Uint64, err = strconv.ParseUint(s, 10, 64)
-	return err
-}
-
-func asString(src interface{}) string {
-	switch v := src.(type) {
-	case string:
-		return v
-	case []byte:
-		return string(v)
-	}
-	return fmt.Sprintf("%v", src)
-}
-
-type JsonNullUInt64 struct {
-	NullUint64
-}
-
-func (v JsonNullUInt64) MarshalJSON() ([]byte, error) {
-	if v.Valid {
-		return json.Marshal(v.Uint64)
-	} else {
-		return json.Marshal(nil)
-	}
 }
 
 type Activity struct {
@@ -81,7 +33,7 @@ type Activity struct {
 	SourceId          uint64         `json:"source_id"`
 	TargetObjectId    uint64         `json:"target_object_id"`
 	RetweetedStatusId JsonNullUInt64 `json:"retweeted_status_id"`
-	CreatedOn         int            `json:"created_on"`
+	CreatedOn         int            `json:"created_at"`
 }
 
 func NewRouter(dbSource string, callback string) *Router {
@@ -90,19 +42,6 @@ func NewRouter(dbSource string, callback string) *Router {
 		callback:     callback,
 		sessionStore: NewSessionStore(strings.HasPrefix(callback, "https")),
 	}
-}
-
-func NewSessionStore(secure bool) *gsm.MemcacheStore {
-	var memcacheClient = memcache.New("localhost:11211")
-	var store = gsm.NewMemcacheStore(memcacheClient, "session_prefix_", []byte("secret-key-goes-here"))
-	store.Options = &sessions.Options{
-		MaxAge:   0,
-		Path:     "/signin/",
-		Secure:   secure,
-		HttpOnly: true,
-	}
-	store.StoreMethod = gsm.StoreMethodGob
-	return store
 }
 
 func (r *Router) signin(c echo.Context) error {
@@ -145,7 +84,7 @@ func (r *Router) signinCallback(c echo.Context) error {
 	user, err := api.GetSelf(v)
 
 	now := time.Now()
-	fmt.Printf("callback user_id:%s screen_name:%s name:%s\n", user.Id, user.ScreenName, user.Name)
+	fmt.Printf("signin success user_id:%s screen_name:%s name:%s\n", user.IdStr, user.ScreenName, user.Name)
 
 	db, err := sql.Open("mysql", r.dbSource)
 	if err != nil {
@@ -153,47 +92,82 @@ func (r *Router) signinCallback(c echo.Context) error {
 	}
 	defer db.Close()
 
-	stmtIns, err := db.Prepare(`
+	tx, err := db.Begin()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// fetch new crawler id
+	var crawlerId string
+	err = tx.QueryRow("SELECT id FROM crawler WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 1").Scan(&crawlerId)
+	if err != nil {
+		tx.Rollback()
+		panic(err.Error())
+	}
+
+	_, err = tx.Exec(`
 		INSERT INTO account(
 			crawler_id,
 			user_id,
 			name,
 			screen_name,
-			api_token,
 			access_token,
 			access_token_secret,
 			status,
-			created_on,
-			updated_on
-		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+			created_at,
+			updated_at
+		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
 			name = VALUES(name),
 			screen_name = VALUES(screen_name),
-			api_token = VALUES(api_token),
 			access_token = VALUES(access_token),
 			access_token_secret = VALUES(access_token_secret),
 			status = VALUES(status),
-			updated_on = ?
-	`)
+			updated_at = ?
+	`, crawlerId, user.Id, user.Name, user.ScreenName, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
 	if err != nil {
-		panic(err.Error())
-	}
-	defer stmtIns.Close()
-
-	apiToken := r.makeToken()
-
-	_, err = stmtIns.Exec(1, user.Id, user.Name, user.ScreenName, apiToken, cred.Token, cred.Secret, "ACTIVE", now.Unix(), 0, now.Unix())
-	if err != nil {
+		tx.Rollback()
 		panic(err.Error())
 	}
 
-	req, _ := http.NewRequest("GET", "http://127.0.0.1:8001/"+user.IdStr+"/start", nil)
+	apiToken := user.IdStr + "-" + r.makeToken()
+
+	_, err = tx.Exec(`
+		INSERT INTO api_token(
+			user_id,
+			api_token,
+			created_at
+		) VALUES(?, ?, ?)
+	`, user.Id, apiToken, now.Unix())
+	if err != nil {
+		tx.Rollback()
+		panic(err.Error())
+	}
+
+	var crawlerUrl string
+	err = tx.QueryRow(`
+		SELECT crawler.url
+		FROM account
+		LEFT OUTER JOIN crawler ON crawler.id = account.crawler_id
+		WHERE user_id = ? LIMIT 1
+	`, user.Id).Scan(&crawlerUrl)
+	if err != nil {
+		tx.Rollback()
+		panic(err.Error())
+	}
+
+	tx.Commit()
+
+	req, _ := http.NewRequest("GET", crawlerUrl+user.IdStr+"/start", nil)
 	client := new(http.Client)
-	resp, _ := client.Do(req)
-	defer resp.Body.Close()
-	byteArray, _ := ioutil.ReadAll(resp.Body)
-	fmt.Printf("request user_id:%s screen_name:%s res:%s\n", user.IdStr, user.ScreenName, string(byteArray))
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer res.Body.Close()
+	byteArray, _ := ioutil.ReadAll(res.Body)
+	fmt.Printf("start streaming user_id:%s screen_name:%s res:%s\n", user.IdStr, user.ScreenName, string(byteArray))
 
-	return c.Render(http.StatusOK, "index", user.IdStr+"-"+apiToken)
+	return c.Render(http.StatusOK, "index", apiToken)
 }
 
 func (r *Router) makeToken() string {
@@ -216,15 +190,10 @@ func (r *Router) activity(c echo.Context) error {
 	}
 	defer db.Close()
 
-	stmtOut, err := db.Prepare("SELECT user_id FROM account WHERE api_token = ?")
-	if err != nil {
-		panic(err.Error())
-	}
-	defer stmtOut.Close()
-
 	var userIdStr string
-
-	err = stmtOut.QueryRow(apiToken).Scan(&userIdStr)
+	err = db.QueryRow(`
+		SELECT user_id FROM api_token WHERE api_token = ? LIMIT 1
+	`, apiToken).Scan(&userIdStr)
 	if err != nil {
 		return c.String(401, "Invalid X-Justaway-API-Token header")
 	}
@@ -257,7 +226,7 @@ func (r *Router) activity(c echo.Context) error {
 	sinceId := toId(c.QueryParam("since_id"))
 
 	stmt := sq.
-		Select("id, event, target_id, source_id, target_object_id, retweeted_status_id, created_on").
+		Select("id, event, target_id, source_id, target_object_id, retweeted_status_id, created_at").
 		From("activity").
 		Where(sq.Eq{"target_id": userIdStr}).
 		OrderBy("id DESC").

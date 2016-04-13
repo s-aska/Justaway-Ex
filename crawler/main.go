@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/s-aska/Justaway-Ex/crawler/crawler"
@@ -8,13 +9,32 @@ import (
 	"github.com/s-aska/Justaway-Ex/crawler/models"
 	"github.com/s-aska/anaconda"
 	"os"
+	"strings"
 )
 
 func main() {
-	consumerKey := os.Getenv("CONSUMER_KEY")
-	consumerSecret := os.Getenv("CONSUMER_SECRET")
-	crawlerId := os.Getenv("JUSTAWAY_EX_CRAWLER_ID") // ex. 1
+	consumerKey := os.Getenv("JUSTAWAY_EX_CONSUMER_KEY")
+	consumerSecret := os.Getenv("JUSTAWAY_EX_CONSUMER_SECRET")
 	dbSource := os.Getenv("JUSTAWAY_EX_DB_SOURCE")   // ex. justaway@tcp(192.168.0.10:3306)/justaway
+	crawlerId := os.Getenv("JUSTAWAY_EX_CRAWLER_ID") // ex. 1
+
+	errors := []string{}
+	if consumerKey == "" {
+		errors = append(errors, "$ export JUSTAWAY_EX_CONSUMER_KEY=''")
+	}
+	if consumerSecret == "" {
+		errors = append(errors, "$ export JUSTAWAY_EX_CONSUMER_SECRET=''")
+	}
+	if dbSource == "" {
+		errors = append(errors, "$ export JUSTAWAY_EX_DB_SOURCE=''")
+	}
+	if crawlerId == "" {
+		errors = append(errors, "$ export JUSTAWAY_EX_CRAWLER_ID=''")
+	}
+	if len(errors) > 0 {
+		fmt.Println(strings.Join(errors, "\n"))
+		os.Exit(1)
+	}
 
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)

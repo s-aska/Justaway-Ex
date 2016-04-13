@@ -30,7 +30,7 @@ func (m *Model) CreateActivity(event string, targetId string, sourceId string, t
 			target_id,
 			source_id,
 			target_object_id,
-			created_on
+			created_at
 		) VALUES(?, ?, ?, ?, ?)
 	`)
 	if err != nil {
@@ -61,7 +61,7 @@ func (m *Model) CreateRetweetActivity(event string, targetId string, sourceId st
 			source_id,
 			target_object_id,
 			retweeted_status_id,
-			created_on
+			created_at
 		) VALUES(?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
