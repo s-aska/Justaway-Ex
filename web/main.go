@@ -5,6 +5,7 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
+	"github.com/s-aska/Justaway-Ex/web/routes"
 	"io"
 	"os"
 	"strings"
@@ -53,11 +54,11 @@ func main() {
 	}
 	e.SetRenderer(t)
 
-	r := NewRouter(dbSource, callback)
+	r := routes.New(dbSource, callback)
 
 	e.Debug()
-	e.Get("/signin/", r.signin)
-	e.Get("/signin/callback", r.signinCallback)
-	e.Get("/api/activity/list.json", r.activity)
+	e.Get("/signin/", r.Signin)
+	e.Get("/signin/callback", r.SigninCallback)
+	e.Get("/api/activity/list.json", r.ApiActivityList)
 	e.Run(standard.New("127.0.0.1:8002"))
 }

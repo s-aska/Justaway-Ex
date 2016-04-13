@@ -3,42 +3,81 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Justaway</title>
-    <meta name="description" content="Twitter Client">
+    <title>Justaway Ex</title>
+    <meta name="description" content="Justaway Ex">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta property="og:image" content="https://justaway.info/img/logo.png">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link href="//fonts.googleapis.com/css?family=Offside:400" rel="stylesheet" type="text/css">
-    <link href="//fonts.googleapis.com/css?family=Raleway:100" rel="stylesheet" type="text/css">
+    <link href="//fonts.googleapis.com/css?family=Offside:400" rel="stylesheet" type="text/css"  media="none" onload="if(media!='all')media='all'">
+    <link href="//fonts.googleapis.com/css?family=Raleway:100" rel="stylesheet" type="text/css"  media="none" onload="if(media!='all')media='all'">
     <style>
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-size: 14px;
+      line-height: 1.42857143;
+      color: #333;
+      background-color: #fff;
+    }
+    a {
+      color: #428bca;
+      text-decoration: none;
+      background: transparent;
+    }
+    a:active,
+    a:hover {
+      outline: 0;
+    }
+    .container {
+      margin-right: auto;
+      margin-left: auto;
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .text-muted {
+      color: #999;
+    }
     h1 {
       font-family: Offside;
       font-size: 64px;
       padding-top: 1em;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+    p {
+      margin: 0 0 10px;
     }
     h1 + p {
       font-size: 16px;
       font-weight: bold;
       padding-top: 0.5em;
-      padding-bottom: 2em;
+      padding-bottom: 3em;
     }
     img {
       position: relative;
       cursor: pointer;
       padding-bottom: 20px;
+      transition-duration: 0.5s;
     }
     footer {
       margin-top: 54px;
       padding-top: 10px;
       padding-bottom: 10px;
       border-top: 1px dashed gray;
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: 200;
       color: gray;
       text-align: center;
     }
     .ios {
       -webkit-font-smoothing: antialiased;
       font-family: 'AvenirNext-Regular', Avenir, 'Helvetica Neue', Helvetica, Arial, 'Hiragino Kaku Gothic ProN', 'Droid Sans', Meiryo, 'sans-serif';
+    }
+    .click {
+      transform: translateY(-1000px);
     }
     @media screen and (max-width: 768px) {
       h1 {
@@ -53,21 +92,26 @@
       }
     }
     </style>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script>
-    $(document).ready(function(){
-      var img = $('img.logo');
-      img.click(function(e){
-        img.animate({top: '-1000px'}, function(){
-          setTimeout(function(){
+    var eventHandler = function() {
+      var img = document.querySelector("img.logo");
+      if (img) {
+        img.addEventListener('click', function() {
+          img.className = 'logo click';
+          setTimeout(function() {
             location.href = 'justaway://ex/callback/{{.}}';
-          }, 200);
+          }, 1000);
         });
-      });
+      }
       setTimeout(function(){
         location.href = 'justaway://ex/callback/{{.}}';
       }, 5000);
-    });
+    }
+    if (document.readyState !== 'loading') {
+      eventHandler();
+    } else {
+      document.addEventListener('DOMContentLoaded', eventHandler);
+    }
     </script>
   </head>
   <body>

@@ -15,7 +15,7 @@ export JUSTAWAY_EX_CONSUMER_KEY=''
 export JUSTAWAY_EX_CONSUMER_SECRET=''
 export JUSTAWAY_EX_DB_SOURCE='justaway@tcp(192.168.0.10:3306)/justaway'
 export JUSTAWAY_EX_CALLBACK='http://127.0.0.1:8002/signin/callback'
-go run *.go
+go run main.go
 ```
 
 ```bash
