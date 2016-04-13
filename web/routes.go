@@ -242,7 +242,7 @@ func (r *Router) activity(c echo.Context) error {
 			defer stmtOut.Close()
 			var dbId string
 			fmt.Printf("target_object_id:%s event:%s source_id:%s\n", fields[0], fields[1], fields[2])
-			err = stmtOut.QueryRow(fields[0], fields[1], fields[2], fields[3]).Scan(&dbId)
+			err = stmtOut.QueryRow(fields[0], fields[1], fields[2]).Scan(&dbId)
 			if err != nil {
 				fmt.Println(err.Error())
 				return ""
