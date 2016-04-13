@@ -61,9 +61,10 @@ func (m *Model) CreateAccount(userIdStr string, name string, screenName string, 
 		INSERT INTO api_token(
 			user_id,
 			api_token,
-			created_at
-		) VALUES(?, ?, ?)
-	`, userIdStr, apiToken, now.Unix())
+			created_at,
+			authenticated_at
+		) VALUES(?, ?, ?, ?)
+	`, userIdStr, apiToken, now.Unix(), now.Unix())
 	if err != nil {
 		tx.Rollback()
 		panic(err.Error())

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/labstack/echo"
+	"time"
 )
 
 func (r *Router) ApiActivityList(c echo.Context) error {
@@ -25,6 +26,8 @@ func (r *Router) ApiActivityList(c echo.Context) error {
 	if err != nil {
 		return c.String(401, "Invalid X-Justaway-API-Token header")
 	}
+
+	_, err = db.Exec(`UPDATE api_token SET authenticated_at = ? WHERE api_token = ?`, time.Now().Unix(), apiToken)
 
 	activities := m.LoadActivities(userIdStr, c.QueryParam("max_id"), c.QueryParam("since_id"))
 

@@ -53,6 +53,7 @@ CREATE TABLE api_token (
                         CHARACTER SET ascii
                         COLLATE ascii_bin     NOT NULL,
     created_at          INTEGER UNSIGNED      NOT NULL,
+    authenticated_at    INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (api_token),
     KEY (user_id)
