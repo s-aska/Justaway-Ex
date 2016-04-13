@@ -234,14 +234,14 @@ func (r *Router) activity(c echo.Context) error {
 			return ""
 		} else if strings.Contains(id, ":") {
 			fields := strings.Split(id, ":")
-			stmtOut, err := db.Prepare("SELECT id FROM activity WHERE target_object_id = ? AND event = ? AND target_id = ? AND source_id = ? LIMIT 1")
+			stmtOut, err := db.Prepare("SELECT id FROM activity WHERE target_object_id = ? AND event = ? AND source_id = ? LIMIT 1")
 			if err != nil {
 				fmt.Println(err.Error())
 				return ""
 			}
 			defer stmtOut.Close()
 			var dbId string
-			fmt.Printf("target_object_id:%s event:%s target_id:%s source_id:%s\n", fields[0], fields[1], fields[2], fields[3])
+			fmt.Printf("target_object_id:%s event:%s source_id:%s\n", fields[0], fields[1], fields[2])
 			err = stmtOut.QueryRow(fields[0], fields[1], fields[2], fields[3]).Scan(&dbId)
 			if err != nil {
 				fmt.Println(err.Error())
