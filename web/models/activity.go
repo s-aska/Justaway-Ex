@@ -55,7 +55,7 @@ func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr str
 		From("activity").
 		Where(sq.Eq{"target_id": userIdStr}).
 		OrderBy("id DESC").
-		Limit(200)
+		Limit(100)
 
 	if maxId != "" {
 		stmt = stmt.Where(sq.LtOrEq{"id": maxId})
