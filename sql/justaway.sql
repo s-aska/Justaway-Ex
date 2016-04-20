@@ -3,9 +3,7 @@ BEGIN;
 DROP TABLE IF EXISTS crawler;
 CREATE TABLE crawler (
     id                  BIGINT UNSIGNED      NOT NULL AUTO_INCREMENT,
-    url                 VARCHAR(255)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin    NOT NULL,
+    url                 VARCHAR(255)         NOT NULL,
     status              ENUM(
                             'ACTIVE',
                             'INACTIVE'
@@ -14,7 +12,7 @@ CREATE TABLE crawler (
     updated_at          INTEGER UNSIGNED     NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (url)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS account;
 CREATE TABLE account (
@@ -23,15 +21,9 @@ CREATE TABLE account (
     user_id             BIGINT UNSIGNED       NOT NULL,
     name                VARCHAR(64)
                         CHARACTER SET utf8mb4 NOT NULL,
-    screen_name         VARCHAR(64)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
-    access_token        VARCHAR(64)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
-    access_token_secret VARCHAR(64)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
+    screen_name         VARCHAR(64)           NOT NULL,
+    access_token        VARCHAR(64)           NOT NULL,
+    access_token_secret VARCHAR(64)           NOT NULL,
     status              ENUM(
                             'ACTIVE',
                             'REVOKE',
@@ -43,21 +35,19 @@ CREATE TABLE account (
     deleted_at          INTEGER UNSIGNED      NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     UNIQUE KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS api_token;
 CREATE TABLE api_token (
     id                  BIGINT UNSIGNED       NOT NULL AUTO_INCREMENT,
     user_id             BIGINT UNSIGNED       NOT NULL,
-    api_token           VARCHAR(128)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
+    api_token           VARCHAR(128)          NOT NULL,
     created_at          INTEGER UNSIGNED      NOT NULL,
     authenticated_at    INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (api_token),
     KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS notification_settings;
 CREATE TABLE notification_settings (
@@ -68,29 +58,26 @@ CREATE TABLE notification_settings (
     updated_at          INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS notification_device;
 CREATE TABLE notification_device (
     id                  BIGINT UNSIGNED       NOT NULL AUTO_INCREMENT,
     user_id             BIGINT UNSIGNED       NOT NULL,
-    name                TEXT                  NOT NULL,
-    token               VARCHAR(255)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
+    name                VARCHAR(64)
+                        CHARACTER SET utf8mb4 NOT NULL,
+    token               VARCHAR(255)          NOT NULL,
     platform            ENUM('APNS', 'GCM')   NOT NULL,
     created_at          INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY (platform, token),
-    INDEX (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+    UNIQUE KEY (user_id, token),
+    INDEX (platform, token)
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS activity;
 CREATE TABLE activity (
     id                  BIGINT UNSIGNED       NOT NULL AUTO_INCREMENT,
-    event               VARCHAR(32)
-                        CHARACTER SET ascii
-                        COLLATE ascii_bin     NOT NULL,
+    event               VARCHAR(32)           NOT NULL,
     target_id           BIGINT UNSIGNED       NOT NULL,
     source_id           BIGINT UNSIGNED       NOT NULL,
     target_object_id    BIGINT UNSIGNED       NOT NULL,
@@ -100,6 +87,6 @@ CREATE TABLE activity (
     UNIQUE KEY (target_object_id, event, source_id),
     KEY (retweeted_status_id),
     KEY (target_id)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 COMMIT;
