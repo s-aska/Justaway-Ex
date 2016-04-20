@@ -67,7 +67,11 @@ CREATE TABLE notification_device (
     name                VARCHAR(64)
                         CHARACTER SET utf8mb4 NOT NULL,
     token               VARCHAR(255)          NOT NULL,
-    platform            ENUM('APNS', 'GCM')   NOT NULL,
+    platform            ENUM(
+                            'APNS',
+                            'APNS_SANDBOX',
+                            'GCM'
+                        )                     NOT NULL,
     created_at          INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY (user_id, token),

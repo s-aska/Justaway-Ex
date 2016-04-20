@@ -59,6 +59,7 @@ func main() {
 	e.Debug()
 	e.Get("/signin/", r.Signin)
 	e.Get("/signin/callback", r.SigninCallback)
+	e.Put("/api/devices.json", r.ApiDeviceTokenRegister)
 	e.Get("/api/activity/list.json", r.ApiActivityList)
 	e.Run(standard.New("127.0.0.1:8002"))
 }
