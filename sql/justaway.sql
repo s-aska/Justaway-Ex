@@ -74,8 +74,8 @@ CREATE TABLE notification_device (
                         )                     NOT NULL,
     created_at          INTEGER UNSIGNED      NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY (user_id, token),
-    INDEX (platform, token)
+    UNIQUE KEY (user_id, platform, token),
+    INDEX (token, platform)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET ascii COLLATE ascii_bin;
 
 DROP TABLE IF EXISTS activity;
