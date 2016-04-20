@@ -24,15 +24,15 @@ func (c *Crawler) connectStream(ch <-chan bool, userId string, accessToken strin
 			case anaconda.FriendsList:
 				fmt.Printf("[%s] connected\n", userId)
 			case anaconda.Tweet:
-				go c.hander.HandlerTweet(userId, data)
+				go c.handler.HandlerTweet(userId, data)
 			case anaconda.DirectMessage:
-				go c.hander.HandlerDirectMessage(userId, data)
+				go c.handler.HandlerDirectMessage(userId, data)
 			case anaconda.StatusDeletionNotice:
-				go c.hander.HandlerStatusDeletionNotice(data)
+				go c.handler.HandlerStatusDeletionNotice(data)
 			case anaconda.DirectMessageDeletionNotice:
-				go c.hander.HandlerDirectMessageDeletionNotice(userId, data)
+				go c.handler.HandlerDirectMessageDeletionNotice(userId, data)
 			case anaconda.EventTweet:
-				go c.hander.HandlerEventTweet(userId, data)
+				go c.handler.HandlerEventTweet(userId, data)
 			case anaconda.EventList:
 				fmt.Printf("[%s] eventList: %s %s\n", userId, data.Event.Event, encodeJson(data))
 			case anaconda.Event:
