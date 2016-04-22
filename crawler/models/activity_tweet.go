@@ -39,9 +39,19 @@ func (m *Model) CreateActivity(event string, targetId string, sourceId string, t
 	}
 	defer stmtIns.Close()
 
-	_, err = stmtIns.Exec(event, targetId, sourceId, targetObjectId, timestamp)
+	result, err := stmtIns.Exec(event, targetId, sourceId, targetObjectId, timestamp)
 	if err != nil {
 		fmt.Println(err.Error())
+		return
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	if id == 0 {
 		return
 	}
 }
@@ -70,9 +80,19 @@ func (m *Model) CreateRetweetActivity(event string, targetId string, sourceId st
 	}
 	defer stmtIns.Close()
 
-	_, err = stmtIns.Exec(event, targetId, sourceId, targetObjectId, retweeetedStatusId, timestamp)
+	result, err := stmtIns.Exec(event, targetId, sourceId, targetObjectId, retweeetedStatusId, timestamp)
 	if err != nil {
 		fmt.Println(err.Error())
+		return
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	if id == 0 {
 		return
 	}
 }

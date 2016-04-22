@@ -26,6 +26,14 @@ func (h *Handler) handlerTweetRetweeted(data anaconda.Tweet) {
 		data.RetweetedStatus.IdStr,
 		createdAtTime.Unix(),
 	)
+	h.enqueuer.Enqueue(
+		"resque:queue:default",
+		"NotificationTweet",
+		data.RetweetedStatus.User.IdStr,
+		data.User.ScreenName,
+		"retweet",
+		data.RetweetedStatus.Text,
+	)
 }
 
 func (h *Handler) handlerTweetReply(data anaconda.Tweet) {
@@ -39,6 +47,14 @@ func (h *Handler) handlerTweetReply(data anaconda.Tweet) {
 		data.User.IdStr,
 		data.IdStr,
 		createdAtTime.Unix(),
+	)
+	h.enqueuer.Enqueue(
+		"resque:queue:default",
+		"NotificationTweet",
+		data.InReplyToUserIdStr,
+		data.User.ScreenName,
+		"reply",
+		data.Text,
 	)
 }
 

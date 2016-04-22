@@ -25,6 +25,14 @@ func (h *Handler) handlerEventTweet(data anaconda.EventTweet) {
 		data.TargetObject.IdStr,
 		createdAtTime.Unix(),
 	)
+	h.enqueuer.Enqueue(
+		"resque:queue:default",
+		"NotificationTweet",
+		data.Event.Target.IdStr,
+		data.Event.Source.ScreenName,
+		data.Event.Event,
+		data.TargetObject.Text,
+	)
 }
 
 func (h *Handler) handlerEventTweetUnfavorite(data anaconda.EventTweet) {
