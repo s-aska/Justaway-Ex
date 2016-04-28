@@ -4,14 +4,27 @@ import (
 	"database/sql"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
-	"github.com/anachronistic/apns"
 	"github.com/benmanns/goworker"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/sideshow/apns2"
+	"github.com/sideshow/apns2/certificate"
+	"github.com/sideshow/apns2/payload"
 	"os"
 )
 
+var apnsClientDevelopment apns2.Client
+
 func init() {
 	goworker.Register("NotificationTweet", NotificationTweet)
+
+	certificateFile := os.Getenv("JUSTAWAY_APNS_CERT_PATH") // cert.pem
+
+	cert, pemErr := certificate.FromPemFile(certificateFile, "")
+	if pemErr != nil {
+		fmt.Println("Cert Error:", pemErr)
+	}
+
+	apnsClientDevelopment = apns2.NewClient(cert).Development()
 }
 
 func main() {
@@ -95,32 +108,25 @@ func sendNotification(userIdStr string, message string) error {
 		}
 		switch platform {
 		case "APNS_SANDBOX":
-			sendApns(token, message)
+			sendApnsDevelopment(token, message)
 		}
 	}
 
 	return nil
 }
 
-func sendApns(token string, message string) {
-	payload := apns.NewPayload()
-	payload.Alert = message
-	payload.Badge = 1
-	payload.Sound = "bingbong.aiff"
+func sendApnsDevelopment(token string, message string) {
+	payload := payload.NewPayload().Alert(message)
+	notification := &apns2.Notification{}
+	notification.DeviceToken = token
+	notification.Topic = "pw.aska.Justaway"
+	notification.Payload = payload
+	res, err := apnsClientDevelopment.Push(notification)
 
-	pn := apns.NewPushNotification()
-	pn.DeviceToken = token
-	pn.AddPayload(payload)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
-	certificateFile := os.Getenv("JUSTAWAY_APNS_SANDBOX_CERT_PATH")  // apns-dev-cert.pem
-	keyFile := os.Getenv("JUSTAWAY_APNS_SANDBOX_KEY_NOENC_PEM_PATH") // apns-dev-key-noenc.pem
-
-	client := apns.NewClient("gateway.sandbox.push.apple.com:2195", certificateFile, keyFile)
-	resp := client.Send(pn)
-
-	alert, _ := pn.PayloadString()
-	fmt.Println("  Token:", pn.DeviceToken)
-	fmt.Println("  Alert:", alert)
-	fmt.Println("Success:", resp.Success)
-	fmt.Println("  Error:", resp.Error)
+	fmt.Println("APNs ID:", res.ApnsID)
 }
