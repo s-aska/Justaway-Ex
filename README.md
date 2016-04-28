@@ -24,10 +24,7 @@ export JUSTAWAY_EX_CONSUMER_KEY=''
 export JUSTAWAY_EX_CONSUMER_SECRET=''
 export JUSTAWAY_EX_DB_SOURCE='justaway@tcp(192.168.0.10:3306)/justaway'
 export JUSTAWAY_EX_CRAWLER_ID='1'
-export JUSTAWAY_APNS_CERT_PATH='/../apns-dev-cert.pem'
-export JUSTAWAY_APNS_KEY_NOENC_PEM_PATH='/../apns-dev-key-noenc.pem'
-export JUSTAWAY_APNS_SANDBOX_CERT_PATH='/../sandbox/apns-dev-cert.pem'
-export JUSTAWAY_APNS_SANDBOX_KEY_NOENC_PEM_PATH='/../sandbox/apns-dev-key-noenc.pem'
+export JUSTAWAY_APNS_PEM_PATH='/../apns.pem'
 go run *.go
 
 mysql -h 192.168.0.10 -u justaway justaway
@@ -38,8 +35,7 @@ mysql -h 192.168.0.10 -u justaway justaway
 
 ```bash
 cd sandbox
-export JUSTAWAY_APNS_CERT_PATH='/../apns-dev-cert.pem'
-export JUSTAWAY_APNS_KEY_NOENC_PEM_PATH='/../apns-dev-key-noenc.pem'
+export JUSTAWAY_APNS_PEM_PATH='/../apns.pem'
 
-go run apns.go
+go run apns2_sandbox.go [device_token]
 ```

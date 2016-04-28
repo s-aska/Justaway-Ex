@@ -12,18 +12,20 @@ import (
 	"os"
 )
 
+var apnsClientProduction *apns2.Client
 var apnsClientDevelopment *apns2.Client
 
 func init() {
 	goworker.Register("NotificationTweet", NotificationTweet)
 
-	certificateFile := os.Getenv("JUSTAWAY_APNS_CERT_PATH") // cert.pem
+	pemFile := os.Getenv("JUSTAWAY_APNS_PEM_PATH") // apns.pem
 
-	cert, pemErr := certificate.FromPemFile(certificateFile, "")
+	cert, pemErr := certificate.FromPemFile(pemFile, "")
 	if pemErr != nil {
 		fmt.Println("Cert Error:", pemErr)
 	}
 
+	apnsClientProduction = apns2.NewClient(cert).Production()
 	apnsClientDevelopment = apns2.NewClient(cert).Development()
 }
 
@@ -111,12 +113,30 @@ func sendNotification(userIdStr string, message string) error {
 			continue
 		}
 		switch platform {
+		case "APNS":
+			sendApnsProduction(token, message)
 		case "APNS_SANDBOX":
 			sendApnsDevelopment(token, message)
 		}
 	}
 
 	return nil
+}
+
+func sendApnsProduction(token string, message string) {
+	payload := payload.NewPayload().Alert(message)
+	notification := &apns2.Notification{}
+	notification.DeviceToken = token
+	notification.Topic = "pw.aska.Justaway"
+	notification.Payload = payload
+	res, err := apnsClientProduction.Push(notification)
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Println("APNs ID:", res.ApnsID)
 }
 
 func sendApnsDevelopment(token string, message string) {
