@@ -24,11 +24,19 @@ export JUSTAWAY_EX_CONSUMER_KEY=''
 export JUSTAWAY_EX_CONSUMER_SECRET=''
 export JUSTAWAY_EX_DB_SOURCE='justaway@tcp(192.168.0.10:3306)/justaway'
 export JUSTAWAY_EX_CRAWLER_ID='1'
-export JUSTAWAY_APNS_PEM_PATH='/../apns.pem'
 go run *.go
 
 mysql -h 192.168.0.10 -u justaway justaway
 > INSERT INTO crawler(url, created_at, updated_at) VALUES('http://127.0.0.1:8001/', UNIX_TIMESTAMP(NOW()), UNIX_TIMESTAMP(NOW()));
+```
+
+### worker
+
+```bash
+cd worker
+export JUSTAWAY_EX_DB_SOURCE='justaway@tcp(192.168.0.10:3306)/justaway'
+export JUSTAWAY_APNS_PEM_PATH='/../apns.pem'
+go run main.go
 ```
 
 ### apns test
