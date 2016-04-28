@@ -34,9 +34,10 @@ func main() {
 }
 
 // http://sreecharans.blogspot.jp/2011/08/how-to-build-apple-push-notification.html
-// - Launch Keychain Assistant from your local Mac and from the login keychain, filter by the Certificates category. You will see an expandable option called “Apple Development Push Services”
-// - Expand this option then right click on “Apple Development Push Services” > Export “Apple Development Push Services ID123″. Save this as apns-dev-cert.p12 file somewhere you can access it.
-// - Do the same again for the “Private Key” that was revealed when you expanded “Apple Development Push Services” ensuring you save it as apns-dev-key.p12 file.
+// - Launch Keychain Assistant from your local Mac and from the login keychain, filter by the Certificates category.
+//   You will see an expandable option called “Apple Push Services”
+// - Expand this option then right click on “Apple Push Services” > Export “Apple Push Services ID123″. Save this as apns-cert.p12 file somewhere you can access it.
+// - Do the same again for the “Private Key” that was revealed when you expanded “Apple Push Services” ensuring you save it as apns-key.p12 file.
 // openssl pkcs12 -clcerts -nokeys -out apns-cert.pem -in apns-cert.p12
 // openssl pkcs12 -nocerts -out apns-key.pem -in apns-key.p12
 // openssl rsa -in apns-key.pem -out apns-key-noenc.pem
