@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-var apnsClientDevelopment apns2.Client
+var apnsClientDevelopment *apns2.Client
 
 func init() {
 	goworker.Register("NotificationTweet", NotificationTweet)
