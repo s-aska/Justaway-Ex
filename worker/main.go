@@ -59,12 +59,16 @@ func NotificationTweet(queue string, args ...interface{}) error {
 	}
 
 	switch event {
-	case "retweet":
-		sendNotification(userIdStr, "@"+screenName+" さんがリツイート\n"+text)
+	case "retweet", "retweeted_retweet":
+		sendNotification(userIdStr, "@"+screenName+"さんがリツイートしました\n"+text)
 	case "reply":
-		sendNotification(userIdStr, "@"+screenName+" さんがリプライ\n"+text)
+		sendNotification(userIdStr, "@"+screenName+"さんからのリプライ\n"+text)
+	case "favorite", "favorited_retweet":
+		sendNotification(userIdStr, "@"+screenName+"さんがいいねしました\n"+text)
+	case "quoted_tweet":
+		sendNotification(userIdStr, "@"+screenName+"さんが引用しました\n"+text)
 	default:
-		sendNotification(userIdStr, "@"+screenName+" さんが"+event+"\n"+text)
+		sendNotification(userIdStr, "@"+screenName+"さんが"+event+"\n"+text)
 	}
 
 	return nil
