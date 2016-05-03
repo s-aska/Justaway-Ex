@@ -9,7 +9,7 @@ import (
 	"net/url"
 )
 
-func (r *Router) Signin(c echo.Context) error {
+func (r *Router) SignIn(c echo.Context) error {
 	url, tempCred, err := anaconda.AuthorizationURL(r.callback)
 
 	if err != nil {
@@ -24,7 +24,7 @@ func (r *Router) Signin(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, url+"&force_login=true")
 }
 
-func (r *Router) SigninCallback(c echo.Context) error {
+func (r *Router) SignInCallback(c echo.Context) error {
 	session, _ := r.loadSession(c)
 	token := session.Values["request_token"]
 	secret := session.Values["request_secret"]

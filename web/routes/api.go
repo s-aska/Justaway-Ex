@@ -3,6 +3,7 @@ package routes
 import (
 	"database/sql"
 	"github.com/labstack/echo"
+	"net/http"
 	"time"
 )
 
@@ -59,6 +60,48 @@ func (r *Router) ApiActivityList(c echo.Context) error {
 	activities := m.LoadActivities(userIdStr, c.QueryParam("max_id"), c.QueryParam("since_id"))
 
 	return c.JSON(200, activities)
+}
+
+func (r *Router) Revoke(c echo.Context) error {
+	m := r.NewModel()
+
+	db, err := m.Open()
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	userIdStr := auth(c, db)
+
+	if userIdStr == "" {
+		return c.String(401, "invalid X-Justaway-API-Token header")
+	}
+
+	var crawlerUrl string
+	err = db.QueryRow(`
+		SELECT crawler.url
+		FROM account
+		LEFT OUTER JOIN crawler ON crawler.id = account.crawler_id
+		WHERE user_id = ? LIMIT 1
+	`, userIdStr).Scan(&crawlerUrl)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = db.Exec("UPDATE account SET status = 'REVOKE' WHERE user_id = ?", userIdStr)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	req, _ := http.NewRequest("GET", crawlerUrl+userIdStr+"/stop", nil)
+	client := new(http.Client)
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer res.Body.Close()
+
+	return c.JSON(200, map[string]bool{"Success": true})
 }
 
 func auth(c echo.Context, db *sql.DB) string {

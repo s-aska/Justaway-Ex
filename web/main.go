@@ -9,8 +9,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/template"
 )
-import "text/template"
 
 type Template struct {
 	templates *template.Template
@@ -57,8 +57,9 @@ func main() {
 	r := routes.New(dbSource, callback)
 
 	e.Debug()
-	e.Get("/signin/", r.Signin)
-	e.Get("/signin/callback", r.SigninCallback)
+	e.Get("/signin/", r.SignIn)
+	e.Get("/signin/callback", r.SignInCallback)
+	e.Post("/api/revoke.json", r.Revoke)
 	e.Put("/api/devices.json", r.ApiDeviceTokenRegister)
 	e.Get("/api/activity/list.json", r.ApiActivityList)
 	e.Run(standard.New("127.0.0.1:8002"))
