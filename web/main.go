@@ -62,5 +62,6 @@ func main() {
 	e.Post("/api/revoke.json", r.Revoke)
 	e.Put("/api/devices.json", r.ApiDeviceTokenRegister)
 	e.Get("/api/activity/list.json", r.ApiActivityList)
+	e.Get("/api/statuses/favoriters/ids.json", r.ApiFavoritersIds)
 	e.Run(standard.New("127.0.0.1:8002"))
 }

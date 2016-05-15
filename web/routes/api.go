@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+type ResponseIds struct {
+	Ids []string `json:"ids"`
+}
+
 func (r *Router) ApiDeviceTokenRegister(c echo.Context) error {
 	m := r.NewModel()
 
@@ -60,6 +64,26 @@ func (r *Router) ApiActivityList(c echo.Context) error {
 	activities := m.LoadActivities(userIdStr, c.QueryParam("max_id"), c.QueryParam("since_id"))
 
 	return c.JSON(200, activities)
+}
+
+func (r *Router) ApiFavoritersIds(c echo.Context) error {
+	m := r.NewModel()
+
+	db, err := m.Open()
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	userIdStr := auth(c, db)
+
+	if userIdStr == "" {
+		return c.String(401, "invalid X-Justaway-API-Token header")
+	}
+
+	ids := m.LoadFavoriterIds(userIdStr, c.QueryParam("id"))
+
+	return c.JSON(200, ResponseIds{Ids: ids})
 }
 
 func (r *Router) Revoke(c echo.Context) error {

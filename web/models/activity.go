@@ -70,7 +70,7 @@ func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr str
 		panic(err.Error())
 	}
 
-	fmt.Printf("maxId:%s sinceId:%s sql:%s\n", maxId, sinceId, sql)
+	fmt.Printf("[LoadActivities] maxId:%s sinceId:%s sql:%s\n", maxId, sinceId, sql)
 
 	rows, err := db.Query(sql, args...)
 	if err != nil {
@@ -105,4 +105,47 @@ func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr str
 	}
 
 	return activities
+}
+
+func (m *Model) LoadFavoriterIds(userIdStr string, idStr string) []string {
+	db, err := m.Open()
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	stmt := sq.
+		Select("source_id").
+		From("activity").
+		Where(sq.Eq{"target_id": userIdStr}).
+		Where(sq.Eq{"target_object_id": idStr}).
+		Where(sq.Eq{"event": []string{"favorite", "favorited_retweet"}}).
+		OrderBy("id DESC").
+		Limit(100)
+
+	sql, args, err := stmt.ToSql()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("[LoadFavoriterIds] id:%s sql:%s\n", idStr, sql)
+
+	rows, err := db.Query(sql, args...)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer rows.Close()
+
+	ids := []string{}
+
+	for rows.Next() {
+		var id string
+		err = rows.Scan(&id)
+		if err != nil {
+			panic(err.Error())
+		}
+		ids = append(ids, id)
+	}
+
+	return ids
 }
