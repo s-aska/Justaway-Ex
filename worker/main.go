@@ -92,6 +92,7 @@ func sendNotification(userIdStr string, message string) error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
 	stmt := sq.
 		Select("name, token, platform").
