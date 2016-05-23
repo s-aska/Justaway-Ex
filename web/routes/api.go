@@ -40,7 +40,7 @@ func (r *Router) ApiDeviceTokenRegister(c echo.Context) error {
 
 	_, err = db.Exec(`
 		INSERT INTO notification_device(user_id, name, token, platform, created_at)
-		VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name)
+		VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), created_at = VALUES(created_at)
 	`, userIdStr, deviceName, deviceToken, deviceType, time.Now().Unix())
 
 	return c.JSON(200, map[string]bool{"Success": true})
