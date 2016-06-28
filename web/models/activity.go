@@ -13,7 +13,7 @@ type Activity struct {
 	SourceId          uint64         `json:"source_id"`
 	TargetObjectId    uint64         `json:"target_object_id"`
 	RetweetedStatusId JsonNullUInt64 `json:"retweeted_status_id"`
-	CreatedOn         int            `json:"created_at"`
+	CreatedAt         int            `json:"created_at"`
 }
 
 func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr string) []*Activity {
@@ -87,8 +87,8 @@ func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr str
 		var sourceId uint64
 		var targetObjectId uint64
 		var retweetedStatusId JsonNullUInt64
-		var createdOn int
-		err = rows.Scan(&id, &event, &targetId, &sourceId, &targetObjectId, &retweetedStatusId, &createdOn)
+		var createdAt int
+		err = rows.Scan(&id, &event, &targetId, &sourceId, &targetObjectId, &retweetedStatusId, &createdAt)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -99,7 +99,7 @@ func (m *Model) LoadActivities(userIdStr string, maxIdStr string, sinceIdStr str
 			SourceId:          sourceId,
 			TargetObjectId:    targetObjectId,
 			RetweetedStatusId: retweetedStatusId,
-			CreatedOn:         createdOn,
+			CreatedAt:         createdAt,
 		}
 		activities = append(activities, activity)
 	}
